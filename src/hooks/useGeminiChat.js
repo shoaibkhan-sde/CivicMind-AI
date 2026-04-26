@@ -4,9 +4,11 @@
  * countdown, and retry capability.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useContext } from 'react';
 import { sanitizeInput } from '../utils/sanitize.js';
 import logger from '../utils/logger.js';
+import { auth } from '../firebase.js';
+import { SettingsContext } from '../contexts/SettingsContext.jsx';
 
 /**
  * @typedef {Object} ChatMessage
@@ -40,6 +42,7 @@ function useGeminiChat(context = 'election_education') {
   const [retryCountdown, setRetryCountdown] = useState(0);
   const lastMessageRef = useRef(null);
   const countdownTimerRef = useRef(null);
+  const { settings } = useContext(SettingsContext) || {};
 
   /**
    * Starts a countdown timer for rate limit recovery.
@@ -92,10 +95,34 @@ function useGeminiChat(context = 'election_education') {
       lastMessageRef.current = sanitized;
 
       try {
+        let token = null;
+        if (auth && auth.currentUser) {
+          try {
+            token = await auth.currentUser.getIdToken();
+          } catch (tokenErr) {
+            logger.warn('Failed to get auth token for chat request', tokenErr);
+          }
+        }
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const payload = { 
+          message: sanitized, 
+          context,
+          aiConfig: settings?.ai || { style: 'standard', difficulty: 'medium' },
+          appContext: {
+            user_level: settings?.learningData?.userLevel || 'beginner',
+            weakTopics: settings?.learningData?.weakTopics || []
+          }
+        };
+
         const response = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: sanitized, context }),
+          headers,
+          body: JSON.stringify(payload),
         });
 
         if (response.status === 429) {

@@ -5,11 +5,11 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import useQuiz from '../../hooks/useQuiz.js';
-import { QUIZ_QUESTIONS } from '../../utils/constants.js';
+import useQuiz from '../hooks/useQuiz.js';
+import { QUIZ_QUESTIONS } from '../utils/constants.js';
 
 // Mock firebase to prevent initialization errors
-jest.mock('../../firebase.js', () => ({
+jest.mock('../firebase.js', () => ({
   auth: {},
   database: {},
   googleProvider: {},

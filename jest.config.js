@@ -1,9 +1,16 @@
 /** @type {import('jest').Config} */
 const config = {
   testEnvironment: 'jest-environment-jsdom',
-  setupFilesAfterEnv: ['@testing-library/jest-dom'],
+  setupFilesAfterEnv: [
+    '@testing-library/jest-dom',
+    '<rootDir>/src/__tests__/setup.js',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Map firebase and logger to Jest-safe mocks (avoids import.meta.env parse errors)
+    '<rootDir>/src/firebase(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/firebaseMock.js',
+    '.*/src/firebase(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/firebaseMock.js',
+    '.*/src/utils/logger(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/logger.js',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|webp|svg|ico)$': '<rootDir>/src/__tests__/__mocks__/fileMock.js',
   },

@@ -27,11 +27,13 @@ function trackEvent(eventName, params) {
  * @param {number|null} activeId - Currently expanded stage id
  * @returns {'done'|'active'|'todo'} Visual state for the node circle
  */
-function getNodeState(stageId, activeId) {
-  if (activeId === null) return 'todo';
-  if (stageId < activeId) return 'done';
-  if (stageId === activeId) return 'active';
-  return 'todo';
+function getNodeState(stageId, activeId, completedStages) {
+  if (completedStages.includes(stageId)) return 'completed';
+  if (stageId === 1 || completedStages.includes(stageId - 1)) {
+    if (stageId === activeId) return 'active';
+    return 'unlocked';
+  }
+  return 'locked';
 }
 
 /**
@@ -42,6 +44,14 @@ function getNodeState(stageId, activeId) {
  */
 function ElectionTimeline() {
   const [activeId, setActiveId] = useState(null);
+  const [completedStages, setCompletedStages] = useState(() => {
+    try {
+      const stored = localStorage.getItem('civicmind_progress');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const nodeRefs = useRef({});
 
   /**
@@ -52,6 +62,12 @@ function ElectionTimeline() {
     (stageId) => {
       const stage = ELECTION_STAGES.find((s) => s.id === stageId);
       if (!stage) return;
+      
+      const nodeState = getNodeState(stageId, activeId, completedStages);
+      if (nodeState === 'locked') {
+        announceToScreenReader('This stage is locked. Complete previous stages to unlock.');
+        return; // Cannot open locked stages
+      }
 
       setActiveId((prev) => {
         const next = prev === stageId ? null : stageId;
@@ -69,8 +85,18 @@ function ElectionTimeline() {
         return next;
       });
     },
-    []
+    [activeId, completedStages]
   );
+  
+  const handleCompleteStage = useCallback((stageId) => {
+    setCompletedStages(prev => {
+      if (prev.includes(stageId)) return prev;
+      const next = [...prev, stageId];
+      localStorage.setItem('civicmind_progress', JSON.stringify(next));
+      return next;
+    });
+    setActiveId(null); // Collapse after completing
+  }, []);
 
   /**
    * Handle keyboard interactions on a node (Enter and Space expand/collapse).
@@ -112,7 +138,7 @@ function ElectionTimeline() {
         aria-label="Election timeline stages"
       >
         {ELECTION_STAGES.map((stage, index) => {
-          const nodeState = getNodeState(stage.id, activeId);
+          const nodeState = getNodeState(stage.id, activeId, completedStages);
           const isExpanded = activeId === stage.id;
           const isLast = index === ELECTION_STAGES.length - 1;
 
@@ -131,11 +157,12 @@ function ElectionTimeline() {
                 onClick={() => toggleStage(stage.id)}
                 onKeyDown={(e) => handleKeyDown(e, stage.id)}
                 aria-expanded={isExpanded}
-                aria-label={`Stage ${stage.id}: ${stage.title}${isExpanded ? ', expanded' : ', click to expand'}`}
+                aria-label={`Stage ${stage.id}: ${stage.title}${isExpanded ? ', expanded' : ', click to expand'}${nodeState === 'locked' ? ' (Locked)' : ''}`}
                 id={`timeline-node-${stage.id}`}
+                style={{ opacity: nodeState === 'locked' ? 0.5 : 1, cursor: nodeState === 'locked' ? 'not-allowed' : 'pointer' }}
               >
                 <div className={`timeline-node-circle ${nodeState}`} aria-hidden="true">
-                  {stage.icon}
+                  {nodeState === 'locked' ? '🔒' : nodeState === 'completed' ? '✅' : stage.icon}
                 </div>
                 <span className="timeline-node-label">{stage.title}</span>
               </div>
@@ -143,7 +170,7 @@ function ElectionTimeline() {
               {/* Connector line (not after last node) */}
               {!isLast && (
                 <div
-                  className={`timeline-connector ${nodeState === 'done' ? 'done' : 'pending'}`}
+                  className={`timeline-connector ${completedStages.includes(stage.id) ? 'completed' : 'pending'}`}
                   aria-hidden="true"
                 />
               )}
@@ -185,6 +212,17 @@ function ElectionTimeline() {
                   <li key={i}>{fact}</li>
                 ))}
               </ul>
+              
+              {!completedStages.includes(activeStage.id) && (
+                <div style={{ marginTop: 20, textAlign: 'right' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => handleCompleteStage(activeStage.id)}
+                  >
+                    Complete Mission
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -203,16 +241,18 @@ function ElectionTimeline() {
           {ELECTION_STAGES.map((stage) => (
             <div
               key={stage.id}
-              className="card"
+              className={`card ${getNodeState(stage.id, null, completedStages) === 'locked' ? 'locked' : ''}`}
               role="button"
               tabIndex={0}
               onClick={() => toggleStage(stage.id)}
               onKeyDown={(e) => handleKeyDown(e, stage.id)}
               aria-label={`Open details for stage ${stage.id}: ${stage.title}`}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: getNodeState(stage.id, null, completedStages) === 'locked' ? 'not-allowed' : 'pointer', opacity: getNodeState(stage.id, null, completedStages) === 'locked' ? 0.6 : 1 }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                <span style={{ fontSize: 24 }}>{stage.icon}</span>
+                <span style={{ fontSize: 24 }}>
+                  {getNodeState(stage.id, null, completedStages) === 'locked' ? '🔒' : getNodeState(stage.id, null, completedStages) === 'completed' ? '✅' : stage.icon}
+                </span>
                 <div>
                   <p className="text-label" style={{ marginBottom: 2 }}>
                     Stage {stage.id}

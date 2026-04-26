@@ -1,222 +1,170 @@
 /**
- * @fileoverview App.jsx — CivicMind AI application shell.
- * Manages top-level tab routing, auth state, guest banner,
- * and auth modal via useReducer. Uses React.lazy + Suspense for
- * code-split tab components and ErrorBoundary per tab.
+ * @fileoverview App.jsx — CivicMind AI Adventure Shell.
+ * Character-driven navigation and state orchestration.
  */
 
-import React, { lazy, Suspense, useReducer, useCallback, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useCallback, useEffect } from 'react';
 import NavBar from './components/NavBar.jsx';
-import TopBar from './components/TopBar.jsx';
-import GuestBanner from './components/GuestBanner.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
-import NotFound from './components/NotFound.jsx';
+import XPNotification from './components/XPNotification.jsx';
+import XPToast from './components/XPToast.jsx';
 import useAuth from './hooks/useAuth.js';
-import { TABS, TAB_META, WIZARD_STEPS, GA_EVENTS } from './utils/constants.js';
-import logger from './utils/logger.js';
+import useXP from './hooks/useXP.js';
+import { TABS } from './utils/constants.js';
+import { Zap, Flame, CloudUpload } from 'lucide-react';
 
-// ── Lazy-loaded tab components (code splitting) ──────────────────────────────
-const ElectionTimeline = lazy(() => import('./components/ElectionTimeline.jsx'));
-const VotingWizard = lazy(() => import('./components/VotingWizard.jsx'));
-const AIChat = lazy(() => import('./components/AIChat.jsx'));
-const KnowledgeQuiz = lazy(() => import('./components/KnowledgeQuiz.jsx'));
-
-// ── GA4 tracker ──────────────────────────────────────────────────────────────
-function trackEvent(eventName, params) {
-  try {
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      window.gtag('event', eventName, params);
-    }
-  } catch (err) {
-    logger.error('GA4 tracking error', err);
-  }
-}
-
-// ── App state machine ────────────────────────────────────────────────────────
-const SET_TAB = 'SET_TAB';
-const OPEN_AUTH_MODAL = 'OPEN_AUTH_MODAL';
-const CLOSE_AUTH_MODAL = 'CLOSE_AUTH_MODAL';
-const DISMISS_BANNER = 'DISMISS_BANNER';
-const SET_WIZARD_STEP = 'SET_WIZARD_STEP';
-
-const initialAppState = {
-  activeTab: TABS.TIMELINE,
-  isAuthModalOpen: false,
-  isGuestBannerVisible: true,
-  wizardStep: 0,
-};
-
-function appReducer(state, action) {
-  switch (action.type) {
-    case SET_TAB:
-      return { ...state, activeTab: action.payload };
-    case OPEN_AUTH_MODAL:
-      return { ...state, isAuthModalOpen: true };
-    case CLOSE_AUTH_MODAL:
-      return { ...state, isAuthModalOpen: false };
-    case DISMISS_BANNER:
-      return { ...state, isGuestBannerVisible: false };
-    case SET_WIZARD_STEP:
-      return { ...state, wizardStep: action.payload };
-    default:
-      return state;
-  }
-}
+// ── Lazy-loaded adventure views ──────────────────────────────────────────────
+const JourneyMap = lazy(() => import('./components/JourneyMap.jsx'));
+const CandidateSimulator = lazy(() => import('./components/CandidateSimulator.jsx'));
+const SageMentor = lazy(() => import('./components/SageMentor.jsx'));
+const AdaptiveQuiz = lazy(() => import('./components/AdaptiveQuiz.jsx'));
+const SettingsView = lazy(() => import('./components/SettingsView.jsx'));
 
 /**
- * Suspense fallback shown while tab components are loading.
+ * Suspense fallback.
  */
 function TabFallback() {
   return (
-    <div className="suspense-fallback" aria-label="Loading content">
-      <div className="spinner" role="status" aria-label="Loading" />
+    <div className="suspense-fallback" aria-label="Loading adventure...">
+      <div className="spinner" role="status" />
     </div>
   );
 }
 
 /**
  * Root application component.
- * Orchestrates the app shell, auth state, and tab routing.
- *
- * @returns {React.ReactElement}
  */
 function App() {
-  const [appState, dispatch] = useReducer(appReducer, initialAppState);
-  const { user, isGuest, isLoading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState(TABS.JOURNEY);
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+  const { xpState, notifications, removeNotification } = useXP();
+  const { user, isGuest } = useAuth();
+  const [lastLevel, setLastLevel] = useState(xpState.level);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
 
-  const { activeTab, isAuthModalOpen, isGuestBannerVisible, wizardStep } = appState;
-
-  // Hide guest banner if user is signed in
+  // ── Level Up & Victory Detection ──
   useEffect(() => {
-    if (!isGuest && !authLoading) {
-      dispatch({ type: DISMISS_BANNER });
+    if (xpState.level > lastLevel) {
+      setIsVictory(false);
+      setShowLevelUp(true);
+      setLastLevel(xpState.level);
     }
-  }, [isGuest, authLoading]);
+  }, [xpState.level, lastLevel]);
 
-  // Track page_view on tab change
   useEffect(() => {
-    trackEvent(GA_EVENTS.PAGE_VIEW, { tab_name: activeTab });
-    logger.info('Tab changed', { activeTab });
-  }, [activeTab]);
+    const handleVictory = () => {
+      setIsVictory(true);
+      setShowLevelUp(true);
+    };
+    window.addEventListener('civic_victory', handleVictory);
+    return () => window.removeEventListener('civic_victory', handleVictory);
+  }, []);
 
   const handleTabChange = useCallback((tabId) => {
-    dispatch({ type: SET_TAB, payload: tabId });
+    setActiveTab(tabId);
   }, []);
 
-  const handleOpenAuth = useCallback(() => {
-    dispatch({ type: OPEN_AUTH_MODAL });
-  }, []);
-
-  const handleCloseAuth = useCallback(() => {
-    dispatch({ type: CLOSE_AUTH_MODAL });
-  }, []);
-
-  const handleDismissBanner = useCallback(() => {
-    dispatch({ type: DISMISS_BANNER });
-  }, []);
-
-  const handleWizardComplete = useCallback(() => {
-    dispatch({ type: SET_WIZARD_STEP, payload: WIZARD_STEPS.length });
-  }, []);
-
-  const handleWizardStepChange = useCallback((step) => {
-    dispatch({ type: SET_WIZARD_STEP, payload: step });
-  }, []);
-
-  // ── Render active tab content ──────────────────────────────────────────────
   const renderTab = () => {
     switch (activeTab) {
-      case TABS.TIMELINE:
-        return (
-          <ErrorBoundary>
-            <Suspense fallback={<TabFallback />}>
-              <ElectionTimeline />
-            </Suspense>
-          </ErrorBoundary>
-        );
-
-      case TABS.WIZARD:
-        return (
-          <ErrorBoundary>
-            <Suspense fallback={<TabFallback />}>
-              <VotingWizard
-                onComplete={handleWizardComplete}
-              />
-            </Suspense>
-          </ErrorBoundary>
-        );
-
-      case TABS.CHAT:
-        return (
-          <ErrorBoundary>
-            <Suspense fallback={<TabFallback />}>
-              <AIChat context="election_education" />
-            </Suspense>
-          </ErrorBoundary>
-        );
-
+      case TABS.JOURNEY:
+        return <JourneyMap />;
+      case TABS.SIMULATE:
+        return <CandidateSimulator />;
+      case TABS.MENTOR:
+        return <SageMentor />;
       case TABS.QUIZ:
-        return (
-          <ErrorBoundary>
-            <Suspense fallback={<TabFallback />}>
-              <KnowledgeQuiz />
-            </Suspense>
-          </ErrorBoundary>
-        );
-
+        return <AdaptiveQuiz />;
+      case TABS.SETTINGS:
+        return <SettingsView />;
       default:
-        return <NotFound />;
+        return <JourneyMap />;
     }
   };
 
   return (
     <div className="app-shell">
-      {/* ── Left sidebar / mobile bottom bar ── */}
+      {/* Main Sidebar */}
       <NavBar
         activeTab={activeTab}
         onTabChange={handleTabChange}
         user={user}
         isGuest={isGuest}
-        onAvatarClick={handleOpenAuth}
+        onAvatarClick={() => setAuthModalOpen(true)}
       />
 
-      {/* ── Main content area ── */}
-      <div className="main" id="main-content">
-        {/* Top bar */}
-        <TopBar
-          activeTab={activeTab}
-          wizardStep={wizardStep}
-          wizardTotal={WIZARD_STEPS.length}
-          isGuest={isGuest}
-          onSaveProgress={handleOpenAuth}
-        />
+      {/* Main Viewport */}
+      <main className="main" id="main-content">
+        <header className="header-top">
+          <div className="header-title">
+            <h1>Civic Adventure</h1>
+            <div className="level-status">
+              <p>{xpState.title} · Level {xpState.level}</p>
+              <div className="level-progress-track">
+                <div 
+                  className="level-progress-fill" 
+                  style={{ width: `${xpState.progressToNext}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="header-badges">
+            <div className="badge xp" title="Total XP">
+              <Zap size={14} className="icon-gold" />
+              <span>{xpState.xp} XP</span>
+            </div>
+            <div className={`badge streak ${xpState.isTodayActive ? 'active' : ''}`} title="Daily Streak">
+              <Flame size={14} className={xpState.isTodayActive ? 'icon-orange' : 'icon-muted'} />
+              <span>{xpState.streak}</span>
+            </div>
+            {isGuest && (
+              <button className="badge save" onClick={() => setAuthModalOpen(true)}>
+                <CloudUpload size={14} />
+                Save
+              </button>
+            )}
+          </div>
+        </header>
 
-        {/* Guest banner — shown below topbar when user is a guest */}
-        {isGuest && isGuestBannerVisible && (
-          <GuestBanner
-            onDismiss={handleDismissBanner}
-            onSignUp={handleOpenAuth}
-          />
-        )}
+        <Suspense fallback={<TabFallback />}>
+          <ErrorBoundary>
+            <div className="page-content">
+              {renderTab()}
+            </div>
+          </ErrorBoundary>
+        </Suspense>
+      </main>
 
-        {/* Scrollable page content */}
-        <main
-          className="page-content"
-          id="page-content"
-          aria-labelledby="page-title"
-          tabIndex={-1}
-        >
-          {renderTab()}
-        </main>
-      </div>
-
-      {/* ── Auth modal — rendered at root to overlay everything ── */}
+      {/* Overlays */}
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={handleCloseAuth}
-        onSuccess={handleCloseAuth}
+        onClose={() => setAuthModalOpen(false)}
       />
+
+      {showLevelUp && (
+        <XPNotification 
+          newLevel={xpState.level} 
+          newTitle={xpState.title} 
+          isVictory={isVictory}
+          onClose={() => {
+            setShowLevelUp(false);
+            setIsVictory(false);
+          }} 
+        />
+      )}
+
+      {/* XP Gain Toasts */}
+      <div className="xp-toast-container">
+        {notifications.map(note => (
+          <XPToast 
+            key={note.id} 
+            amount={note.amount} 
+            onComplete={() => removeNotification(note.id)} 
+          />
+        ))}
+      </div>
+
     </div>
   );
 }

@@ -11,6 +11,8 @@ import useFirebase from '../hooks/useFirebase.js';
 import { QUIZ_QUESTIONS, GA_EVENTS } from '../utils/constants.js';
 import { announceToScreenReader } from '../utils/accessibility.js';
 import logger from '../utils/logger.js';
+import { SettingsContext } from '../contexts/SettingsContext.jsx';
+import { auth } from '../firebase.js';
 
 /** GA4 event tracker */
 function trackEvent(eventName, params) {
@@ -111,10 +113,16 @@ ScoreRing.propTypes = {
  * @param {KnowledgeQuizProps} props
  * @returns {React.ReactElement}
  */
-function KnowledgeQuiz({ onComplete }) {
+function KnowledgeQuiz({ onComplete = null }) {
   const { state, currentQuestion, totalQuestions, selectAnswer, nextQuestion, resetQuiz } =
     useQuiz();
   const { saveScore, leaderboard, leaderboardLoading } = useFirebase(null);
+  const { settings } = React.useContext(SettingsContext) || {};
+
+  const [dynamicExplanation, setDynamicExplanation] = React.useState('');
+  const [isLoadingExplanation, setIsLoadingExplanation] = React.useState(false);
+  const [consecutiveWrong, setConsecutiveWrong] = React.useState(0);
+  const [showConfusionPrompt, setShowConfusionPrompt] = React.useState(false);
 
   const feedbackRef = useRef(null);
   const hasTrackedStart = useRef(false);
@@ -165,7 +173,7 @@ function KnowledgeQuiz({ onComplete }) {
   }, [phase, selectedIndex, currentQuestion]);
 
   const handleSelectAnswer = useCallback(
-    (optionIndex) => {
+    async (optionIndex) => {
       if (phase !== 'playing') return;
       const isCorrect = optionIndex === currentQuestion.correctIndex;
       selectAnswer(optionIndex);
@@ -174,8 +182,52 @@ function KnowledgeQuiz({ onComplete }) {
         question_id: String(currentQuestion.id),
         correct: isCorrect,
       });
+      
+      if (!isCorrect) {
+        setConsecutiveWrong(prev => {
+          const next = prev + 1;
+          if (next >= 2) setShowConfusionPrompt(true);
+          return next;
+        });
+      } else {
+        setConsecutiveWrong(0);
+        setShowConfusionPrompt(false);
+      }
+
+      // Fetch dynamic explanation
+      setIsLoadingExplanation(true);
+      setDynamicExplanation('');
+      try {
+        let token = null;
+        if (auth && auth.currentUser) token = await auth.currentUser.getIdToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const response = await fetch('/api/chat/explain', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            question: currentQuestion.question,
+            selectedOption: currentQuestion.options[optionIndex],
+            correctOption: currentQuestion.options[currentQuestion.correctIndex],
+            appContext: { user_level: settings?.learningData?.userLevel || 'beginner' }
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setDynamicExplanation(data.explanation);
+        } else {
+          setDynamicExplanation(currentQuestion.explanation);
+        }
+      } catch (err) {
+        logger.error('Failed to fetch dynamic explanation', err);
+        setDynamicExplanation(currentQuestion.explanation); // Fallback
+      } finally {
+        setIsLoadingExplanation(false);
+      }
     },
-    [phase, currentQuestion, selectAnswer]
+    [phase, currentQuestion, selectAnswer, settings]
   );
 
   const handleReset = useCallback(() => {
@@ -289,6 +341,11 @@ function KnowledgeQuiz({ onComplete }) {
       </div>
 
       {/* Question */}
+      {settings?.learningData?.useLearningData && (
+        <div className="transparency-banner text-small" style={{ marginBottom: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+          💡 Why am I seeing this? We matched this question to your "{settings.learningData.userLevel}" level.
+        </div>
+      )}
       <h2
         className="quiz-question-text"
         id={`quiz-question-${currentIndex}`}
@@ -348,7 +405,18 @@ function KnowledgeQuiz({ onComplete }) {
           aria-live="assertive"
           role="status"
         >
-          💡 {currentQuestion.explanation}
+          {isLoadingExplanation ? (
+            <span className="typing-indicator">Generating explanation...</span>
+          ) : (
+            <>
+              💡 {dynamicExplanation || currentQuestion.explanation}
+              {showConfusionPrompt && (
+                <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                  ⚠️ Looks like you're having trouble. Want to chat with CivicMentor AI about this?
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -377,8 +445,5 @@ KnowledgeQuiz.propTypes = {
   onComplete: PropTypes.func,
 };
 
-KnowledgeQuiz.defaultProps = {
-  onComplete: null,
-};
 
 export default KnowledgeQuiz;

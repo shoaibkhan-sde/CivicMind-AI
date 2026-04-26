@@ -1,44 +1,41 @@
 /**
  * @fileoverview Tests for ElectionTimeline component.
- * Covers rendering, node expand/collapse, and keyboard interaction.
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ElectionTimeline from '../../components/ElectionTimeline.jsx';
-import { ELECTION_STAGES } from '../../utils/constants.js';
+import ElectionTimeline from '../components/ElectionTimeline.jsx';
+import { ELECTION_STAGES } from '../utils/constants.js';
 
-// Mock firebase
-jest.mock('../../firebase.js', () => ({
-  auth: {},
-  database: {},
-  googleProvider: {},
-}));
-
-// Mock gtag
 beforeEach(() => {
   window.gtag = jest.fn();
 });
 
 describe('ElectionTimeline', () => {
-  it('renders all 7 stage nodes', () => {
+  it('renders the timeline heading', () => {
+    render(<ElectionTimeline />);
+    expect(screen.getByText(/The Election Lifecycle/i)).toBeInTheDocument();
+  });
+
+  it('renders all 7 overview stage cards', () => {
     render(<ElectionTimeline />);
     ELECTION_STAGES.forEach((stage) => {
-      expect(screen.getByText(stage.title)).toBeInTheDocument();
+      expect(screen.getAllByText(stage.title).length).toBeGreaterThan(0);
     });
   });
 
-  it('clicking a node sets aria-expanded to true', () => {
+  it('clicking a timeline node sets aria-expanded to true', () => {
     render(<ElectionTimeline />);
-    const firstNode = screen.getByRole('button', { name: /Stage 1/i });
+    // The node buttons have id="timeline-node-N" — use that for exact targeting
+    const firstNode = document.getElementById('timeline-node-1');
     fireEvent.click(firstNode);
     expect(firstNode).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('clicking an expanded node collapses it (aria-expanded becomes false)', () => {
+  it('clicking the same node again collapses it', () => {
     render(<ElectionTimeline />);
-    const firstNode = screen.getByRole('button', { name: /Stage 1/i });
+    const firstNode = document.getElementById('timeline-node-1');
     fireEvent.click(firstNode);
     expect(firstNode).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(firstNode);
@@ -47,23 +44,24 @@ describe('ElectionTimeline', () => {
 
   it('pressing Enter on a node expands it', () => {
     render(<ElectionTimeline />);
-    const firstNode = screen.getByRole('button', { name: /Stage 1/i });
+    const firstNode = document.getElementById('timeline-node-1');
     fireEvent.keyDown(firstNode, { key: 'Enter', code: 'Enter' });
     expect(firstNode).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('pressing Space on a node expands it', () => {
     render(<ElectionTimeline />);
-    const secondNode = screen.getByRole('button', { name: /Stage 2/i });
+    const secondNode = document.getElementById('timeline-node-2');
     fireEvent.keyDown(secondNode, { key: ' ', code: 'Space' });
     expect(secondNode).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('shows the stage detail card when a node is expanded', () => {
+  it('shows the first key fact when a node is expanded', () => {
     render(<ElectionTimeline />);
     const firstStage = ELECTION_STAGES[0];
-    const firstNode = screen.getByRole('button', { name: /Stage 1/i });
+    const firstNode = document.getElementById('timeline-node-1');
     fireEvent.click(firstNode);
-    expect(screen.getByText(firstStage.duration)).toBeInTheDocument();
+    // The detail card renders the stage title as a heading
+    expect(screen.getByRole('heading', { name: firstStage.title })).toBeInTheDocument();
   });
 });

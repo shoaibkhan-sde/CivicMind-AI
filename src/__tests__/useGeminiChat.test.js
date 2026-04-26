@@ -4,7 +4,7 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
-import useGeminiChat from '../../hooks/useGeminiChat.js';
+import useGeminiChat from '../hooks/useGeminiChat.js';
 
 // Mock DOMPurify for jsdom environment
 jest.mock('dompurify', () => ({
@@ -12,7 +12,7 @@ jest.mock('dompurify', () => ({
 }));
 
 // Mock firebase
-jest.mock('../../firebase.js', () => ({
+jest.mock('../firebase.js', () => ({
   auth: {},
   database: {},
   googleProvider: {},

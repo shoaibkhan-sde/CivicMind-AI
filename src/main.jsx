@@ -8,6 +8,11 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import { SettingsProvider } from './contexts/SettingsContext.jsx';
+import { ProgressionProvider } from './contexts/ProgressionContext.jsx';
+import { JourneyProvider } from './contexts/JourneyContext.jsx';
+
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
@@ -16,6 +21,14 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <SettingsProvider>
+        <ProgressionProvider>
+          <JourneyProvider>
+            <App />
+          </JourneyProvider>
+        </ProgressionProvider>
+      </SettingsProvider>
+    </AuthProvider>
   </React.StrictMode>
 );

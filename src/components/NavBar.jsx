@@ -6,7 +6,23 @@
 
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { NAV_ITEMS } from '../utils/constants.js';
+import { NAV_ITEMS, TABS } from '../utils/constants.js';
+import { 
+  Map as MapIcon, 
+  Users, 
+  Bot, 
+  GraduationCap, 
+  Settings, 
+  User as UserIcon,
+  Compass
+} from 'lucide-react';
+
+const ICON_MAP = {
+  [TABS.JOURNEY]: <MapIcon size={20} />,
+  [TABS.SIMULATE]: <Users size={20} />,
+  [TABS.MENTOR]: <Bot size={20} />,
+  [TABS.QUIZ]: <GraduationCap size={20} />,
+};
 
 /**
  * @typedef {Object} NavBarProps
@@ -25,7 +41,7 @@ import { NAV_ITEMS } from '../utils/constants.js';
  * @param {NavBarProps} props
  * @returns {React.ReactElement}
  */
-function NavBar({ activeTab, onTabChange, user, isGuest, onAvatarClick }) {
+function NavBar({ activeTab, onTabChange, user = null, isGuest, onAvatarClick }) {
   /**
    * Handle keyboard navigation for nav items.
    * Activates the item on Enter or Space.
@@ -43,16 +59,11 @@ function NavBar({ activeTab, onTabChange, user, isGuest, onAvatarClick }) {
     [onTabChange]
   );
 
-  /** Derive avatar initials from user display name or default to 'G' */
-  const avatarInitial = user?.displayName
-    ? user.displayName.charAt(0).toUpperCase()
-    : 'G';
-
   return (
     <nav className="sidebar" aria-label="Main navigation">
       {/* Logo mark */}
       <div className="sidebar-logo" aria-hidden="true" title="CivicMind AI">
-        ⚖️
+        <Compass size={32} className="logo-icon-premium" />
       </div>
 
       {/* Primary nav items */}
@@ -66,12 +77,12 @@ function NavBar({ activeTab, onTabChange, user, isGuest, onAvatarClick }) {
               className={`nav-item${activeTab === item.id ? ' active' : ''}`}
               onClick={() => onTabChange(item.id)}
               onKeyDown={(e) => handleKeyDown(e, item.id)}
-              aria-label={item.ariaLabel}
+              aria-label={item.label}
               aria-current={activeTab === item.id ? 'page' : undefined}
-              title={item.ariaLabel}
+              title={item.label}
               id={`nav-${item.id}`}
             >
-              <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+              <span className="nav-icon" aria-hidden="true">{ICON_MAP[item.id]}</span>
               <span className="nav-label">{item.label}</span>
             </button>
           </div>
@@ -83,23 +94,28 @@ function NavBar({ activeTab, onTabChange, user, isGuest, onAvatarClick }) {
         <div className="sidebar-separator" aria-hidden="true" />
 
         <button
-          className="nav-item"
+          className={`nav-item${activeTab === TABS.SETTINGS ? ' active' : ''}`}
+          onClick={() => onTabChange(TABS.SETTINGS)}
           aria-label="Settings"
           title="Settings"
           id="nav-settings"
         >
-          <span className="nav-icon" aria-hidden="true">⚙️</span>
+          <span className="nav-icon" aria-hidden="true"><Settings size={20} /></span>
           <span className="nav-label">Settings</span>
         </button>
 
         <button
           className="avatar-btn"
           onClick={onAvatarClick}
-          aria-label={isGuest ? 'Guest user — click to save progress' : `Signed in as ${user?.displayName || user?.email || 'User'}`}
-          title={isGuest ? 'Save Progress' : user?.displayName || 'Account'}
+          aria-label={user ? 'User Profile' : 'Sign In'}
+          title={user ? user.displayName || user.email || 'Account' : 'Sign In'}
           id="nav-avatar"
         >
-          {avatarInitial}
+          {(user && user.email) 
+            ? user.email[0].toUpperCase() 
+            : (user && user.displayName) 
+              ? user.displayName[0].toUpperCase() 
+              : <UserIcon size={18} />}
           {isGuest && (
             <span className="avatar-guest-dot" aria-hidden="true" />
           )}
@@ -113,12 +129,8 @@ NavBar.propTypes = {
   activeTab: PropTypes.string.isRequired,
   onTabChange: PropTypes.func.isRequired,
   user: PropTypes.object,
-  isGuest: PropTypes.bool.isRequired,
+  isGuest: PropTypes.bool,
   onAvatarClick: PropTypes.func.isRequired,
-};
-
-NavBar.defaultProps = {
-  user: null,
 };
 
 export default React.memo(NavBar);

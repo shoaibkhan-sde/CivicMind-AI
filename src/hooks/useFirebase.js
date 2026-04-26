@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { ref, push, query, orderByChild, limitToLast, get } from 'firebase/database';
+import { ref, push, query, orderByChild, limitToLast, get, update } from 'firebase/database';
 import { database } from '../firebase.js';
 import logger from '../utils/logger.js';
 
@@ -121,6 +121,27 @@ function useFirebase(uid) {
     leaderboard,
     leaderboardLoading,
     scoreSaving,
+    /**
+     * Saves or updates the user's mission progress.
+     * @param {string} stageId
+     * @param {boolean} completed
+     */
+    saveJourneyProgress: async (stageId, completed = true) => {
+      if (!uid || !database) return;
+      const journeyRef = ref(database, `users/${uid}/journey`);
+      await update(journeyRef, { [stageId]: completed });
+      logger.info('Journey progress saved', { stageId });
+    },
+    /**
+     * Updates user profile attributes (XP, Level, etc).
+     * @param {Object} updates
+     */
+    saveProfileUpdates: async (updates) => {
+      if (!uid || !database) return;
+      const profileRef = ref(database, `users/${uid}/profile`);
+      await update(profileRef, updates);
+      logger.info('Profile updated', updates);
+    }
   };
 }
 

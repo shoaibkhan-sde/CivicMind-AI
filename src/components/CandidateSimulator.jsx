@@ -1,0 +1,148 @@
+/**
+ * @fileoverview CandidateSimulator — Interactive election narrative adventure.
+ */
+
+import React, { useState } from 'react';
+import useSimulator from '../hooks/useSimulator';
+import useXP from '../hooks/useXP';
+import { SIM_SCENARIOS } from '../utils/constants';
+
+/**
+ * Main simulation experience.
+ */
+export default function CandidateSimulator() {
+  const { day, budget, stats, history, phase, makeDecision, resetSim } = useSimulator();
+  const { addXP } = useXP();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // 🛡️ SANITIZER: Prevent crash if phase data is missing
+  const scenarios = SIM_SCENARIOS[phase] || SIM_SCENARIOS.early || [];
+  const currentScene = scenarios.length > 0 
+    ? scenarios[history.length % scenarios.length] 
+    : { scene: 'Campaign Trail', description: 'Meeting with the people.', prompt: 'What will you say?', choices: [] };
+
+  const handleChoice = async (choice) => {
+    setIsProcessing(true);
+    // Simulate AI delay
+    setTimeout(() => {
+      makeDecision(choice);
+      addXP(20);
+      setIsProcessing(false);
+    }, 800);
+  };
+
+  if (phase === 'results') {
+    const isWinner = stats.trust > 70;
+    return (
+      <div className="sim-results-overlay">
+        <div className="results-premium-card">
+          <div className="results-trophy">{isWinner ? '🏆' : '🕯️'}</div>
+          <h2 className="results-heading">{isWinner ? 'A Historic Victory!' : 'The People have Spoken'}</h2>
+          
+          <div className="results-score-row">
+            <div className="score-box">
+              <span className="score-label">Final Trust</span>
+              <span className="score-value">{stats.trust}%</span>
+            </div>
+            <div className="score-box">
+              <span className="score-label">Public Reach</span>
+              <span className="score-value">{stats.reach}%</span>
+            </div>
+          </div>
+
+          <div className="results-narrative">
+            <p>
+              {isWinner 
+                ? "You have earned the mandate of the people through integrity and vision. Your campaign will be remembered as a blueprint for clean, effective civic leadership."
+                : "While the numbers didn't reach the majority, your journey has sparked critical conversations. In a democracy, every voice raised is a victory for the constitution."}
+            </p>
+            <div className="results-sage-quote">
+              "The ballot is stronger than the bullet. Your journey as a leader has only just begun."
+              <span>― Sage, Your Civic Mentor 🦉</span>
+            </div>
+          </div>
+
+          <button className="results-restart-btn" onClick={resetSim}>
+            Re-Enter the Arena <span className="arrow">→</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="sim-container">
+      {/* LEFT: Stats */}
+      <div className="sim-stats-panel">
+        <h3>Campaign Status</h3>
+        <div className="budget-counter">₹{budget.toLocaleString()}</div>
+        
+        <div className="stat-bars">
+          {Object.entries(stats).map(([key, val]) => (
+            <div key={key} className="stat-bar-group">
+              <div className="stat-label">
+                <span className="capitalize">{key}</span>
+                <span>{val}%</span>
+              </div>
+              <div className="stat-track">
+                <div 
+                  className={`stat-fill ${key}`} 
+                  style={{ width: `${val}%`, backgroundColor: key === 'trust' ? '#10b981' : key === 'reach' ? '#3b82f6' : '#f59e0b' }} 
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CENTER: Scene */}
+      <div className="sim-scene">
+        <div className="scene-card">
+          <div className="scene-header">
+            📍 Day {day} · {currentScene?.scene || 'Civic Mission'}
+          </div>
+          <p className="scene-desc">{currentScene?.description || 'Loading scenario...'}</p>
+          <h4 className="scene-prompt">{currentScene?.prompt || 'Make your move, candidate.'}</h4>
+          
+          <div className="choice-grid">
+            {(currentScene?.choices || []).map((choice) => (
+              <button 
+                key={choice.id} 
+                className="choice-btn premium-choice"
+                disabled={isProcessing || budget < (choice.cost || 0)}
+                onClick={() => handleChoice(choice)}
+              >
+                <div className="choice-content">
+                  <div className="choice-main-text">{choice.text}</div>
+                  <div className="choice-sub-hint">{choice.hint}</div>
+                </div>
+                {(choice.cost || 0) > 0 && <span className="choice-cost-badge">-₹{(choice.cost || 0).toLocaleString()}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT: Dashboard */}
+      <div className="sim-dashboard">
+        <h3>Campaign Log</h3>
+        <div className="log-list">
+          {history.length === 0 ? (
+            <div className="log-empty-state">
+              <p>Your campaign journey starts here...</p>
+              <small>Every decision will be recorded here for your civic review.</small>
+            </div>
+          ) : (
+            history.slice().reverse().map((entry, i) => (
+              <div key={i} className="log-item">
+                <div className="log-day-tag">Day {entry.day}</div>
+                <div className="log-text">{entry.text}</div>
+                {entry.lesson && <div className="log-lesson">💡 {entry.lesson}</div>}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

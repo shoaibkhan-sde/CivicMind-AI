@@ -4,7 +4,9 @@
  * to eliminate console.log statements from production builds.
  */
 
-const isDev = import.meta.env?.DEV === true || import.meta.env?.MODE === 'development';
+// Use process.env.NODE_ENV — works in both Vite (via define) and Jest (built-in)
+// Jest sets NODE_ENV='test'; Vite sets it to 'development' or 'production'
+const isDev = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
 
 /**
  * @typedef {Object} Logger

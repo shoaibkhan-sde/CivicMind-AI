@@ -74,7 +74,7 @@ function wizardReducer(state, action) {
  * @param {VotingWizardProps} props
  * @returns {React.ReactElement}
  */
-function VotingWizard({ onComplete }) {
+function VotingWizard({ onComplete = null }) {
   const [state, dispatch] = useReducer(wizardReducer, initialWizardState);
   const titleRef = useRef(null);
 
@@ -275,8 +275,5 @@ VotingWizard.propTypes = {
   onComplete: PropTypes.func,
 };
 
-VotingWizard.defaultProps = {
-  onComplete: null,
-};
 
 export default VotingWizard;

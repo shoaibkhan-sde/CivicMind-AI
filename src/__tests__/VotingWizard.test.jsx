@@ -1,22 +1,13 @@
 /**
  * @fileoverview Tests for VotingWizard component.
- * Covers step rendering, navigation, progress bar, and completion screen.
  */
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import VotingWizard from '../../components/VotingWizard.jsx';
-import { WIZARD_STEPS } from '../../utils/constants.js';
+import VotingWizard from '../components/VotingWizard.jsx';
+import { WIZARD_STEPS } from '../utils/constants.js';
 
-// Mock firebase
-jest.mock('../../firebase.js', () => ({
-  auth: {},
-  database: {},
-  googleProvider: {},
-}));
-
-// Mock gtag
 beforeEach(() => {
   window.gtag = jest.fn();
 });
@@ -29,40 +20,41 @@ describe('VotingWizard', () => {
 
   it('Next button advances to step 2', () => {
     render(<VotingWizard />);
-    const nextBtn = screen.getByRole('button', { name: /next step/i });
+    const nextBtn = document.getElementById('wizard-next-btn');
     fireEvent.click(nextBtn);
     expect(screen.getByText(WIZARD_STEPS[1].title)).toBeInTheDocument();
   });
 
   it('Previous button is disabled on step 1', () => {
     render(<VotingWizard />);
-    const prevBtn = screen.getByRole('button', { name: /previous step/i });
+    const prevBtn = document.getElementById('wizard-prev-btn');
     expect(prevBtn).toBeDisabled();
   });
 
-  it('Progress bar role="progressbar" has correct aria-valuenow on step change', () => {
+  it('Progress bar has correct aria-valuenow on each step', () => {
     render(<VotingWizard />);
     const progressBar = screen.getByRole('progressbar');
     expect(progressBar).toHaveAttribute('aria-valuenow', '1');
 
-    const nextBtn = screen.getByRole('button', { name: /next step/i });
+    const nextBtn = document.getElementById('wizard-next-btn');
     fireEvent.click(nextBtn);
     expect(progressBar).toHaveAttribute('aria-valuenow', '2');
   });
 
-  it('completion screen renders after advancing past the last step', () => {
+  it('clicking through all steps shows the completion screen', () => {
     render(<VotingWizard />);
-    // Advance through all 5 steps
     for (let i = 0; i < WIZARD_STEPS.length; i++) {
-      const nextBtn = screen.getByRole('button', { name: /next step|complete/i });
+      const nextBtn = document.getElementById('wizard-next-btn');
       fireEvent.click(nextBtn);
     }
     expect(screen.getByText(/Ready to Vote/i)).toBeInTheDocument();
   });
 
-  it('step indicator dots are rendered', () => {
+  it('step indicator dots are rendered for each step', () => {
     render(<VotingWizard />);
-    const dots = screen.getAllByRole('listitem');
-    expect(dots.length).toBeGreaterThanOrEqual(WIZARD_STEPS.length);
+    // Each dot has id="wizard-dot-N"
+    const dots = WIZARD_STEPS.map((_, i) => document.getElementById(`wizard-dot-${i + 1}`));
+    dots.forEach((dot) => expect(dot).toBeInTheDocument());
+    expect(dots.length).toBe(WIZARD_STEPS.length);
   });
 });

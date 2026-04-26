@@ -35,7 +35,7 @@ function trackEvent(eventName, params) {
  * @param {AIChatProps} props
  * @returns {React.ReactElement}
  */
-function AIChat({ context }) {
+function AIChat({ context = 'election_education' }) {
   const { messages, isLoading, error, retryCountdown, sendMessage, retryLast, clearError } =
     useGeminiChat(context);
 
@@ -118,9 +118,10 @@ function AIChat({ context }) {
         {/* Empty state with chips */}
         {showChips && (
           <div className="chat-empty-state">
-            <span className="chat-empty-icon" aria-hidden="true">⚖️</span>
+            <span className="chat-empty-icon" aria-hidden="true">🧠</span>
+            <h2 style={{ marginBottom: 12 }}>Civic Mentor AI</h2>
             <p className="chat-empty-text">
-              Ask me anything about the election process
+              I can guide you step-by-step or answer your questions.
             </p>
             <div className="chat-chips" role="group" aria-label="Suggested questions">
               {CHAT_CHIPS.map((chip) => (
@@ -144,10 +145,10 @@ function AIChat({ context }) {
             key={msg.id}
             className={`chat-message ${msg.role}`}
             role="article"
-            aria-label={`${msg.role === 'user' ? 'You' : 'CivicMind AI'}: ${msg.content}`}
+            aria-label={`${msg.role === 'user' ? 'You' : 'Civic Mentor AI'}: ${msg.content}`}
           >
             {msg.role === 'assistant' && (
-              <div className="chat-avatar" aria-hidden="true">⚖️</div>
+              <div className="chat-avatar" aria-hidden="true">🧠</div>
             )}
             <div className={`chat-bubble ${msg.role}`}>
               {msg.content}
@@ -157,8 +158,8 @@ function AIChat({ context }) {
 
         {/* Typing indicator */}
         {isLoading && (
-          <div className="chat-message assistant" aria-label="CivicMind AI is typing">
-            <div className="chat-avatar" aria-hidden="true">⚖️</div>
+          <div className="chat-message assistant" aria-label="Civic Mentor AI is typing">
+            <div className="chat-avatar" aria-hidden="true">🧠</div>
             <div className="chat-bubble assistant">
               <div className="typing-indicator" aria-hidden="true">
                 <div className="typing-dot" />
@@ -241,7 +242,7 @@ function AIChat({ context }) {
         </div>
 
         <p id="chat-char-hint" className="text-small" style={{ marginTop: 6, textAlign: 'center' }}>
-          Powered by Gemini 1.5 Flash · Press Enter to send
+          Powered by Gemini 2.5 Flash · Press Enter to send
         </p>
       </div>
     </div>
@@ -250,10 +251,6 @@ function AIChat({ context }) {
 
 AIChat.propTypes = {
   context: PropTypes.string,
-};
-
-AIChat.defaultProps = {
-  context: 'election_education',
 };
 
 export default AIChat;

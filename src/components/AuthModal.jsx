@@ -24,7 +24,7 @@ import useAuth from '../hooks/useAuth.js';
  * @param {AuthModalProps} props
  * @returns {React.ReactElement}
  */
-function AuthModal({ isOpen, onClose, onSuccess }) {
+function AuthModal({ isOpen, onClose, onSuccess = null }) {
   const modalRef = useRef(null);
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, error, clearError, isLoading } =
     useAuth();
@@ -34,6 +34,9 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
+
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   // Trap focus within modal when open
   useEffect(() => {
@@ -57,26 +60,33 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
   // Clear error on open
   useEffect(() => {
     if (isOpen) {
-      clearError();
       setEmailMode(null);
       setEmail('');
       setPassword('');
       setFormError('');
+      setModalError('');
     }
-  }, [isOpen, clearError]);
+  }, [isOpen]);
 
   const handleGoogle = useCallback(async () => {
-    await signInWithGoogle();
-    if (!error) {
+    setModalError('');
+    setIsActionLoading(true);
+    try {
+      await signInWithGoogle();
       onSuccess?.();
       onClose();
+    } catch (err) {
+      setModalError(err.message);
+    } finally {
+      setIsActionLoading(false);
     }
-  }, [signInWithGoogle, error, onSuccess, onClose]);
+  }, [signInWithGoogle, onSuccess, onClose]);
 
   const handleEmailSubmit = useCallback(
     async (e) => {
       e.preventDefault();
       setFormError('');
+      setModalError('');
 
       if (!email || !password) {
         setFormError('Please fill in all fields.');
@@ -87,18 +97,22 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
         return;
       }
 
-      if (emailMode === 'signin') {
-        await signInWithEmail(email, password);
-      } else {
-        await signUpWithEmail(email, password);
-      }
-
-      if (!error) {
+      setIsActionLoading(true);
+      try {
+        if (emailMode === 'signin') {
+          await signInWithEmail(email, password);
+        } else {
+          await signUpWithEmail(email, password);
+        }
         onSuccess?.();
         onClose();
+      } catch (err) {
+        setModalError(err.message);
+      } finally {
+        setIsActionLoading(false);
       }
     },
-    [email, password, emailMode, signInWithEmail, signUpWithEmail, error, onSuccess, onClose]
+    [email, password, emailMode, signInWithEmail, signUpWithEmail, onSuccess, onClose]
   );
 
   return (
@@ -129,9 +143,9 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
         </p>
 
         {/* Error display */}
-        {(error || formError) && (
+        {(modalError || formError) && (
           <p className="auth-error" role="alert">
-            {formError || error}
+            {formError || modalError}
           </p>
         )}
 
@@ -183,11 +197,11 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isLoading}
+              disabled={isActionLoading}
               style={{ width: '100%', padding: '13px' }}
               id="auth-submit-btn"
             >
-              {isLoading ? 'Please wait…' : emailMode === 'signup' ? 'Create Account' : 'Sign In'}
+              {isActionLoading ? 'Please wait…' : emailMode === 'signup' ? 'Create Account' : 'Sign In'}
             </button>
             <button
               type="button"
@@ -206,7 +220,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
             <button
               className="btn-google"
               onClick={handleGoogle}
-              disabled={isLoading}
+              disabled={isActionLoading}
               aria-label="Continue with Google account"
               id="auth-google-btn"
             >
@@ -228,7 +242,7 @@ function AuthModal({ isOpen, onClose, onSuccess }) {
                   d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"
                 />
               </svg>
-              {isLoading ? 'Signing in…' : 'Continue with Google'}
+              {isActionLoading ? 'Signing in…' : 'Continue with Google'}
             </button>
 
             {/* Email options */}
@@ -278,8 +292,5 @@ AuthModal.propTypes = {
   onSuccess: PropTypes.func,
 };
 
-AuthModal.defaultProps = {
-  onSuccess: null,
-};
 
 export default AuthModal;
