@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
 export const SettingsContext = createContext();
 
 const DEFAULT_SETTINGS = {
-  preferences: { theme: 'system', fontSize: 16 },
+  preferences: { theme: 'system', fontSize: 16, avatar: null },
   ai: { style: 'standard', difficulty: 'medium' },
   notifications: { email: true, push: false },
   learningData: { useLearningData: true, weakTopics: [], userLevel: 'beginner' },
@@ -152,6 +152,23 @@ export function SettingsProvider({ children }) {
     });
   }, []);
 
+  // 4. Apply UI Preferences to DOM
+  useEffect(() => {
+    const root = document.documentElement;
+    const theme = settings.preferences.theme;
+    const fontSize = settings.preferences.fontSize;
+
+    // Apply Theme
+    if (theme === 'system') {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    } else {
+      root.setAttribute('data-theme', theme);
+    }
+
+    // Apply Font Size
+    root.style.setProperty('--base-font-size', `${fontSize}px`);
+  }, [settings.preferences.theme, settings.preferences.fontSize]);
   const value = {
     settings,
     updateSettings,

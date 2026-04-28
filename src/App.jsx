@@ -18,7 +18,7 @@ import { Zap, Flame, CloudUpload } from 'lucide-react';
 const JourneyMap = lazy(() => import('./components/JourneyMap.jsx'));
 const CandidateSimulator = lazy(() => import('./components/CandidateSimulator.jsx'));
 const SageMentor = lazy(() => import('./components/SageMentor.jsx'));
-const AdaptiveQuiz = lazy(() => import('./components/AdaptiveQuiz.jsx'));
+const QuizView = lazy(() => import('./components/QuizView.jsx'));
 const SettingsView = lazy(() => import('./components/SettingsView.jsx'));
 
 /**
@@ -75,7 +75,7 @@ function App() {
       case TABS.MENTOR:
         return <SageMentor />;
       case TABS.QUIZ:
-        return <AdaptiveQuiz />;
+        return <QuizView />;
       case TABS.SETTINGS:
         return <SettingsView />;
       default:
@@ -85,7 +85,9 @@ function App() {
 
   return (
     <div className="app-shell">
+      <a href="#main-content" className="skip-link sr-only">Skip to main content</a>
       {/* Main Sidebar */}
+
       <NavBar
         activeTab={activeTab}
         onTabChange={handleTabChange}

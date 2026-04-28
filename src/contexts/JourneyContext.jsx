@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, onValue, update, remove } from 'firebase/database';
 import { database as db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import { JOURNEY_STAGES } from '../utils/constants';
@@ -16,29 +16,50 @@ export function JourneyProvider({ children }) {
   useEffect(() => {
     if (!user) return;
 
-    if (!db) {
-      // Demo Mode: Load from localStorage
-      const localData = localStorage.getItem(`civic_journey_${user.uid}`);
-      const localProgress = localStorage.getItem(`civic_progress_${user.uid}`);
-      if (localData) {
-        setCompletedStages(JSON.parse(localData));
+    // 1. Always load from localStorage to hydrate instantly and preserve data
+    const localData = localStorage.getItem(`civic_journey_${user.uid}`);
+    const localProgress = localStorage.getItem(`civic_progress_${user.uid}`);
+    
+    let initialCompleted = [];
+    if (localData) {
+      try {
+        initialCompleted = JSON.parse(localData);
+        setCompletedStages(initialCompleted);
+      } catch (e) {
+        console.error('Failed to parse local journey data');
       }
-      if (localProgress) {
-        setStageProgress(JSON.parse(localProgress));
-      }
-      setIsHydrated(true);
-      return;
     }
+    
+    if (localProgress) {
+      try {
+        setStageProgress(JSON.parse(localProgress));
+      } catch (e) {
+        console.error('Failed to parse local progress data');
+      }
+    }
+    
+    setIsHydrated(true);
 
-    const journeyRef = ref(db, `users/${user.uid}/journey`);
-    const unsubscribe = onValue(journeyRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      const completed = Object.keys(data).filter(key => data[key] === true);
-      setCompletedStages(completed);
-      setIsHydrated(true);
-    });
+    // 2. If Firebase is active, sync and merge
+    if (db) {
+      const journeyRef = ref(db, `users/${user.uid}/journey`);
+      const unsubscribe = onValue(journeyRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const completedFromDb = Object.keys(data).filter(key => data[key] === true);
+          
+          setCompletedStages(prev => {
+            const merged = new Set([...prev, ...completedFromDb]);
+            const mergedArray = Array.from(merged);
+            // Save merged state back to local storage
+            localStorage.setItem(`civic_journey_${user.uid}`, JSON.stringify(mergedArray));
+            return mergedArray;
+          });
+        }
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    }
   }, [user]);
 
   const completeStage = useCallback(async (stageId) => {
@@ -69,6 +90,27 @@ export function JourneyProvider({ children }) {
     });
   }, [user]);
 
+  const resetJourney = useCallback(async () => {
+    if (!user) return;
+    
+    // Clear Local Storage
+    localStorage.removeItem(`civic_journey_${user.uid}`);
+    localStorage.removeItem(`civic_progress_${user.uid}`);
+    
+    setCompletedStages([]);
+    setStageProgress({});
+    
+    // Clear Firebase
+    if (db) {
+      const journeyRef = ref(db, `users/${user.uid}/journey`);
+      try {
+        await remove(journeyRef);
+      } catch (e) {
+        console.error('Failed to reset journey on Firebase', e);
+      }
+    }
+  }, [user]);
+
   const currentStage = useMemo(() => {
     return JOURNEY_STAGES.find(s => !completedStages.includes(s.id)) || JOURNEY_STAGES[0];
   }, [completedStages]);
@@ -91,6 +133,7 @@ export function JourneyProvider({ children }) {
       completeStage, 
       isLocked, 
       isHydrated,
+      resetJourney,
       allStages: JOURNEY_STAGES 
     }}>
       {children}

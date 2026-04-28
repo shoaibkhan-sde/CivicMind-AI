@@ -66,6 +66,29 @@
   --trans-bounce: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* ── Light Theme Overrides ───────────────────────────────────── */
+[data-theme='light'] {
+  --bg-base: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: rgba(15, 23, 42, 0.06);
+  --bg-active: rgba(59, 130, 246, 0.12);
+
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-primary: #1e293b;
+  --text-secondary: #334155;
+  
+  --border-default: rgba(15, 23, 42, 0.12);
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.2);
+
+  --shadow-premium: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+  
+  --gold: #b45309;
+  --blue: #2563eb;
+}
+
 /* ── Reset & Base ─────────────────────────────────────────── */
 * {
   box-sizing: border-box;

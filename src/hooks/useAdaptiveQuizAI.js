@@ -15,20 +15,20 @@ export default function useAdaptiveQuizAI() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchQuestion = useCallback(async () => {
+  const fetchQuestion = useCallback(async (customStageId) => {
     setIsLoading(true);
     setError(null);
     try {
       const token = await user?.getIdToken();
-      const response = await fetch(`${API_URL}/generate-quiz`, {
+      const response = await fetch(`${API_URL}/quiz/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          stage: currentStage.id,
-          difficulty: xpState.level > 3 ? 'medium' : 'easy',
+          stage: customStageId || currentStage.id,
+          difficulty: xpState.level > 3 ? 'hard' : xpState.level > 1 ? 'medium' : 'easy',
         }),
       });
 

@@ -111,13 +111,16 @@ function useGeminiChat(context = 'election_education') {
 
         const payload = { 
           message: sanitized, 
+          history: messages.map(m => ({ role: m.role, content: m.content })),
           context,
           aiConfig: settings?.ai || { style: 'standard', difficulty: 'medium' },
           appContext: {
-            user_level: settings?.learningData?.userLevel || 'beginner',
+            userLevel: settings?.learningData?.userLevel || 1,
+            currentStage: context,
             weakTopics: settings?.learningData?.weakTopics || []
           }
         };
+
 
         const response = await fetch('/api/chat', {
           method: 'POST',

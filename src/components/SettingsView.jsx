@@ -2,6 +2,8 @@ import React, { useContext, useState } from 'react';
 import useAuth from '../hooks/useAuth.js';
 import useSageChat from '../hooks/useSageChat.js';
 import { SettingsContext } from '../contexts/SettingsContext.jsx';
+import { useJourney } from '../contexts/JourneyContext.jsx';
+import ConfirmModal from './ConfirmModal';
 import logger from '../utils/logger.js';
 import { Trash2 } from 'lucide-react';
 
@@ -9,19 +11,35 @@ import { Trash2 } from 'lucide-react';
  * SettingsView — Immersive settings management.
  * Redesigned for premium visual clarity and professional card-based layout.
  */
+const AVATARS = [
+  { id: 'child_male', label: 'Mini Explorer (M)', path: '/avatars/child_male.png' },
+  { id: 'child_female', label: 'Mini Explorer (F)', path: '/avatars/child_female.png' },
+  { id: 'young_male', label: 'Young Adventurer (M)', path: '/avatars/young_male.png' },
+  { id: 'young_female', label: 'Young Adventurer (F)', path: '/avatars/young_female.png' },
+  { id: 'adult_male', label: 'Civic Leader (M)', path: '/avatars/adult_male.png' },
+  { id: 'adult_female', label: 'Civic Leader (F)', path: '/avatars/adult_female.png' },
+];
+
 export default function SettingsView() {
   const { user, isGuest, signOut, signInWithGoogle } = useAuth();
   const { settings, updateSettings, isHydrated } = useContext(SettingsContext);
   const { clearChat } = useSageChat();
+  const { resetJourney } = useJourney();
   const [isDeleting, setIsDeleting] = useState(false);
 
   // ... previous logic
 
   const handleClearChat = () => {
-    if (window.confirm("Are you sure you want to delete all chat history with Sage? This cannot be undone.")) {
-      clearChat();
-      alert("Chat history has been cleared.");
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Clear Mentor History?",
+      message: "Are you sure you want to delete your conversation history with Sage the Mentor? This action only affects this tab.",
+      action: () => {
+        localStorage.removeItem('sage_chat_history_mentor');
+        // We leave sage_chat_history_journey alone as requested
+        window.location.reload();
+      }
+    });
   };
 
   if (!isHydrated) {
@@ -34,20 +52,26 @@ export default function SettingsView() {
 
   const handleThemeChange = (e) => {
     updateSettings('preferences', { theme: e.target.value });
-    document.documentElement.setAttribute('data-theme', e.target.value);
   };
 
   const handleFontSizeChange = (e) => {
     updateSettings('preferences', { fontSize: parseInt(e.target.value, 10) });
-    document.documentElement.style.setProperty('--base-font-size', `${e.target.value}px`);
   };
 
+  const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', action: null });
+
   const handleResetProgress = () => {
-    if (window.confirm("Are you sure you want to reset your quiz progress? This will clear your streak and XP in demo mode.")) {
-      localStorage.removeItem('civic_xp_temp');
-      localStorage.removeItem('civic_streak_temp');
-      window.location.reload();
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Reset Progress?",
+      message: "Are you sure you want to reset your quiz and journey progress? This will clear all completed stages, streaks, and XP.",
+      action: async () => {
+        await resetJourney();
+        localStorage.removeItem('civic_xp_temp');
+        localStorage.removeItem('civic_streak_temp');
+        window.location.reload();
+      }
+    });
   };
 
   return (
@@ -74,16 +98,54 @@ export default function SettingsView() {
             <>
               <div className="user-profile-header">
                 <div className="user-avatar-large">
-                  {user.displayName ? user.displayName.charAt(0) : 'U'}
+                  {settings.preferences.avatar ? (
+                    <img src={settings.preferences.avatar} alt="Profile" className="avatar-img-fill" />
+                  ) : (
+                    user.displayName ? user.displayName.charAt(0) : 'U'
+                  )}
                 </div>
                 <div className="user-details">
                   <h3>{user.displayName || 'Civic Explorer'}</h3>
                   <p>{user.email}</p>
                 </div>
               </div>
+
+              {/* Avatar Selector */}
+              <div className="avatar-picker-section">
+                <p className="setting-label">Adventure Avatar</p>
+                <div className="avatar-grid">
+                  <button 
+                    className={`avatar-option-btn ${!settings.preferences.avatar ? 'active' : ''}`}
+                    onClick={() => updateSettings('preferences', { avatar: null })}
+                  >
+                    <div className="avatar-preview-circle initial">
+                      {user.displayName ? user.displayName.charAt(0) : 'U'}
+                    </div>
+                  </button>
+                  {AVATARS.map((av) => (
+                    <button 
+                      key={av.id}
+                      className={`avatar-option-btn ${settings.preferences.avatar === av.path ? 'active' : ''}`}
+                      onClick={() => updateSettings('preferences', { avatar: av.path })}
+                      title={av.label}
+                    >
+                      <img src={av.path} alt={av.label} className="avatar-preview-circle" />
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="account-actions" style={{ display: 'flex', gap: '10px' }}>
-                <button className="badge" style={{ flex: 1 }} onClick={signOut}>Sign Out</button>
-                <button className="btn-settings-danger" style={{ flex: 1 }} onClick={() => alert("Account deletion is disabled in demo mode.")}>
+                <button className="badge btn-signout" style={{ flex: 1 }} onClick={signOut}>Sign Out</button>
+                <button 
+                  className="btn-settings-danger" 
+                  style={{ flex: 1 }} 
+                  onClick={() => setConfirmState({
+                    isOpen: true,
+                    title: "Delete Account?",
+                    message: "Account deletion is a permanent action and cannot be undone. Are you absolutely sure?",
+                    action: () => alert("Account deletion is simulated. In production, this would trigger a Firebase Auth deletion.")
+                  })}
+                >
                   Delete Account
                 </button>
               </div>
@@ -202,6 +264,16 @@ export default function SettingsView() {
           </div>
         </div>
       </div>
+      <ConfirmModal 
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={() => {
+          confirmState.action();
+          setConfirmState({ ...confirmState, isOpen: false });
+        }}
+        onCancel={() => setConfirmState({ ...confirmState, isOpen: false })}
+      />
     </div>
   );
 }

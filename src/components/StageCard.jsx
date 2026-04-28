@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import FlowDiagram from './FlowDiagram';
 import { STAGE_DETAILS } from '../utils/constants';
+import { QUESTION_BANK } from '../utils/quiz_bank';
 import useXP from '../hooks/useXP';
 import useJourney from '../hooks/useJourney';
 import { BookOpen, AlertCircle, Target, Globe, AlertTriangle, CheckCircle, MapPin } from 'lucide-react';
@@ -13,7 +14,8 @@ import { BookOpen, AlertCircle, Target, Globe, AlertTriangle, CheckCircle, MapPi
 /**
  * Renders the 4-tab immersive experience for a specific stage.
  */
-export default function StageCard({ stageId }) {
+function StageCard({ stageId }) {
+
   const [activeTab, setActiveTab] = useState('story');
   const [challengeResult, setChallengeResult] = useState(null);
   const [showStageComplete, setShowStageComplete] = useState(false);
@@ -21,11 +23,30 @@ export default function StageCard({ stageId }) {
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   
   const { addXP } = useXP();
-  const { stageProgress, updateStageProgress, completeStage } = useJourney();
+  const { stageProgress, updateStageProgress, completeStage, allStages } = useJourney();
 
-  const details = STAGE_DETAILS[stageId] || STAGE_DETAILS.nomination;
+  const details = STAGE_DETAILS[stageId] || STAGE_DETAILS.announcement || { story: [], facts: [], mistakes: [] };
+  const currentStageMeta = allStages?.find(s => s.id === stageId) || {};
+  const stageTitle = currentStageMeta.title || (stageId.charAt(0).toUpperCase() + stageId.slice(1));
   const currentProgress = stageProgress[stageId] || { currentIndex: 0, masteredSteps: [] };
   
+  // Dynamically generate up to 5 challenges from QUESTION_BANK for this stage
+  const activeChallenges = React.useMemo(() => {
+    const stageQuestions = QUESTION_BANK.filter(q => q.stage === stageId).slice(0, 5);
+    if (stageQuestions.length > 0) {
+      return stageQuestions.map((q) => ({
+        question: q.question,
+        options: q.options.map((optText, index) => ({
+          id: String.fromCharCode(65 + index), // A, B, C, D
+          text: optText,
+          correct: index === q.correctIndex,
+          feedback: q.explanation // Detailed explanation
+        }))
+      }));
+    }
+    return details.challenges || [];
+  }, [stageId, details.challenges]);
+
   // 🛡️ SANITIZER: Prevent NaN or undefined from breaking the UI
   const currentChallengeIndex = (typeof currentProgress.currentIndex === 'number' && !isNaN(currentProgress.currentIndex)) 
     ? currentProgress.currentIndex 
@@ -52,17 +73,17 @@ export default function StageCard({ stageId }) {
         id: Date.now(),
         x: e.clientX || (rect.left + rect.width / 2),
         y: e.clientY || rect.top,
-        amount: 10 // Each step is 10XP
+        amount: 20 // Upgraded to 20XP for premium
       };
       setXpFloats(prev => [...prev, newFloat]);
-      addXP(10);
+      addXP(20);
       setChallengeResult('correct');
       setSelectedOptionId(e.currentTarget.getAttribute('data-opt-id'));
       
       const newMastered = [...masteredSteps, currentChallengeIndex];
       updateStageProgress(stageId, { masteredSteps: newMastered });
 
-      const isLastChallenge = currentChallengeIndex >= (details.challenges?.length - 1 || 0);
+      const isLastChallenge = currentChallengeIndex >= (activeChallenges.length - 1);
       if (isLastChallenge) {
         completeStage(stageId);
         if (stageId === 'results') {
@@ -87,7 +108,7 @@ export default function StageCard({ stageId }) {
   };
 
   const nextStep = () => {
-    if (currentChallengeIndex < (details.challenges?.length - 1 || 0)) {
+    if (currentChallengeIndex < activeChallenges.length - 1) {
       updateStageProgress(stageId, { currentIndex: currentChallengeIndex + 1 });
       setChallengeResult(null);
       setSelectedOptionId(null);
@@ -107,7 +128,7 @@ export default function StageCard({ stageId }) {
     if (currentIndex < allStages.length - 1) {
       const nextStage = allStages[currentIndex + 1];
       setShowStageComplete(false);
-      // 🔥 The map will auto-switch because JourneyMap listens to currentStage
+      // The map will auto-switch because JourneyMap listens to currentStage
     }
   };
 
@@ -123,13 +144,11 @@ export default function StageCard({ stageId }) {
       <div className="stage-content-body">
         {activeTab === 'story' && (
           <div className="tab-story">
-            <h3 className="tab-heading">The Path to Candidacy</h3>
-            <FlowDiagram nodes={details.story} />
-            <div className="fact-chips">
-              {details.facts.map((f, i) => (
-                <div key={i} className="fact-chip">{f}</div>
-              ))}
-            </div>
+            <h3 className="tab-heading" style={{ fontSize: '28px', background: 'linear-gradient(to right, var(--blue), var(--text-primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '24px' }}>The Story of {stageTitle}</h3>
+            <FlowDiagram nodes={(details.story || []).map((node, i) => ({
+              ...node,
+              fact: (details.facts || [])[i]
+            }))} />
           </div>
         )}
 
@@ -152,22 +171,22 @@ export default function StageCard({ stageId }) {
           <div className="tab-challenge">
             <div className="challenge-progress-header">
               <h3 className="tab-heading">Mastery Series</h3>
-              <div className="mastery-steps">Step {currentChallengeIndex + 1} of {details.challenges?.length || 1}</div>
+              <div className="mastery-steps">Step {currentChallengeIndex + 1} of {Math.max(activeChallenges.length, 1)}</div>
             </div>
             
             <div className="mastery-progress-bar">
               <div 
                 className="mastery-progress-fill" 
-                style={{ width: `${((currentChallengeIndex + (challengeResult === 'correct' ? 1 : 0)) / (Math.max(details.challenges?.length || 1, 1))) * 100}%` }}
+                style={{ width: `${((currentChallengeIndex + (challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex) ? 1 : 0)) / Math.max(activeChallenges.length, 1)) * 100}%` }}
               />
             </div>
 
             <p className="challenge-q">
-              {details.challenges ? details.challenges[currentChallengeIndex]?.question : details.challenge?.question}
+              {activeChallenges[currentChallengeIndex]?.question || "No challenge available for this stage."}
             </p>
 
             <div className="choice-grid">
-              {(details.challenges?.[currentChallengeIndex]?.options || details.challenge?.options || []).map((opt) => {
+              {(activeChallenges[currentChallengeIndex]?.options || []).map((opt) => {
                 if (!opt) return null;
                 const isMastered = masteredSteps.includes(currentChallengeIndex);
                 const isCorrectChoice = opt.correct;
@@ -183,37 +202,47 @@ export default function StageCard({ stageId }) {
                      onClick={(e) => handleChallenge(opt.correct, e)}
                      disabled={challengeResult === 'correct' || isMastered}
                   >
-                    <div className="choice-info">{opt.text}</div>
+                    <div className="choice-info">
+                      <span style={{ fontWeight: 'bold', marginRight: '8px', color: 'var(--blue)' }}>{opt.id}.</span> 
+                      {opt.text}
+                    </div>
                   </button>
                 );
               })}
             </div>
 
             {(challengeResult || masteredSteps.includes(currentChallengeIndex)) && (
-              <div className={`challenge-feedback-premium ${masteredSteps.includes(currentChallengeIndex) ? 'correct' : challengeResult}`}>
-                <div className="feedback-content">
-                  {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? <CheckCircle size={18} className="feedback-icon" /> : <AlertTriangle size={18} className="feedback-icon" />}
-                  <span>
-                    {masteredSteps.includes(currentChallengeIndex) || challengeResult === 'correct'
-                      ? (details.challenges?.[currentChallengeIndex]?.options || details.challenge?.options || [])?.find(opt => opt?.correct)?.feedback
-                      : "Not quite! Keep exploring the details above."}
-                  </span>
+              <div className={`challenge-feedback-premium ${masteredSteps.includes(currentChallengeIndex) ? 'correct' : challengeResult}`} style={{ marginTop: '24px', padding: '16px', borderRadius: '12px', background: challengeResult === 'wrong' && !masteredSteps.includes(currentChallengeIndex) ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', border: challengeResult === 'wrong' && !masteredSteps.includes(currentChallengeIndex) ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(34, 197, 94, 0.2)' }}>
+                <div className="feedback-content" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? <CheckCircle size={24} className="feedback-icon" style={{ color: 'var(--green)', flexShrink: 0 }} /> : <AlertTriangle size={24} className="feedback-icon" style={{ color: 'var(--red)', flexShrink: 0 }} />}
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? "Excellent!" : "Not quite!"}
+                    </span>
+                    <span style={{ color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                      {masteredSteps.includes(currentChallengeIndex) || challengeResult === 'correct'
+                        ? activeChallenges[currentChallengeIndex]?.options?.find(opt => opt?.correct)?.feedback
+                        : "Review the question carefully and try again."}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="mastery-nav-controls">
+            <div className="mastery-nav-controls" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
               <button 
-                className="mastery-nav-btn" 
+                className="btn" 
                 onClick={prevStep}
                 disabled={currentChallengeIndex === 0}
+                style={{ opacity: currentChallengeIndex === 0 ? 0.3 : 1, cursor: currentChallengeIndex === 0 ? 'not-allowed' : 'pointer' }}
               >
                 ← Previous
               </button>
               <button 
-                className="mastery-nav-btn next-primary" 
+                className="btn btn-primary" 
                 onClick={nextStep}
-                disabled={currentChallengeIndex === (details.challenges?.length - 1)}
+                disabled={currentChallengeIndex >= activeChallenges.length - 1}
+                style={{ opacity: currentChallengeIndex >= activeChallenges.length - 1 ? 0.3 : 1, cursor: currentChallengeIndex >= activeChallenges.length - 1 ? 'not-allowed' : 'pointer' }}
               >
                 Next Step →
               </button>
@@ -233,13 +262,13 @@ export default function StageCard({ stageId }) {
             {/* Stage Mastery Overlay */}
             {showStageComplete && (
               <div className="stage-mastery-overlay">
-                <div className="mastery-mini-card">
-                  <div className="mastery-icon">🏆</div>
-                  <h3>Mission Mastered!</h3>
-                  <p>You have successfully completed the {details.title} stage. Your civic wisdom grows!</p>
-                  <div className="mastery-actions">
-                    <button className="mastery-btn ghost" onClick={() => setShowStageComplete(false)}>Stay Here</button>
-                    <button className="mastery-btn" onClick={startNextMission}>Next Mission →</button>
+                <div className="mastery-mini-card" style={{ background: 'var(--bg-elevated)', padding: '32px', borderRadius: '16px', border: '1px solid var(--blue)', boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)', textAlign: 'center' }}>
+                  <div className="mastery-icon" style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
+                  <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: 'var(--text-primary)' }}>Mission Mastered!</h3>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>You have successfully completed the {details.title} challenges. Your civic wisdom grows!</p>
+                  <div className="mastery-actions" style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                    <button className="btn" onClick={() => setShowStageComplete(false)}>Stay Here</button>
+                    <button className="btn btn-primary" onClick={startNextMission}>Next Mission →</button>
                   </div>
                 </div>
               </div>
@@ -262,6 +291,6 @@ export default function StageCard({ stageId }) {
   );
 }
 
-StageCard.propTypes = {
-  stageId: PropTypes.string.isRequired,
-};
+export default React.memo(StageCard);
+
+

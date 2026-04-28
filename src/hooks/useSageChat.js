@@ -15,13 +15,15 @@ const API_URL = '/api';
  * Manages conversation with Sage the Mentor.
  * @returns {Object} { messages, sendMessage, isLoading, error }
  */
-export default function useSageChat() {
+export default function useSageChat(scope = 'mentor') {
   const { user } = useAuth();
   const { xpState } = useXP();
   const { currentStage } = useJourney();
+  const storageKey = `sage_chat_history_${scope}`;
+
   const [messages, setMessages] = useState(() => {
     try {
-      const saved = localStorage.getItem('sage_chat_history');
+      const saved = localStorage.getItem(storageKey);
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       return [];
@@ -30,8 +32,8 @@ export default function useSageChat() {
 
   // Sync to localStorage on every change
   useEffect(() => {
-    localStorage.setItem('sage_chat_history', JSON.stringify(messages));
-  }, [messages]);
+    localStorage.setItem(storageKey, JSON.stringify(messages));
+  }, [messages, storageKey]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -111,8 +113,8 @@ export default function useSageChat() {
 
   const clearChat = useCallback(() => {
     setMessages([]);
-    localStorage.removeItem('sage_chat_history');
-  }, []);
+    localStorage.removeItem(storageKey);
+  }, [storageKey]);
 
   return { messages, sendMessage, isLoading, error, clearChat };
 }

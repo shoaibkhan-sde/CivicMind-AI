@@ -16,6 +16,7 @@ import {
   User as UserIcon,
   Compass
 } from 'lucide-react';
+import { SettingsContext } from '../contexts/SettingsContext';
 
 const ICON_MAP = {
   [TABS.JOURNEY]: <MapIcon size={20} />,
@@ -42,6 +43,7 @@ const ICON_MAP = {
  * @returns {React.ReactElement}
  */
 function NavBar({ activeTab, onTabChange, user = null, isGuest, onAvatarClick }) {
+  const { settings } = React.useContext(SettingsContext);
   /**
    * Handle keyboard navigation for nav items.
    * Activates the item on Enter or Space.
@@ -111,7 +113,9 @@ function NavBar({ activeTab, onTabChange, user = null, isGuest, onAvatarClick })
           title={user ? user.displayName || user.email || 'Account' : 'Sign In'}
           id="nav-avatar"
         >
-          {(user && user.email) 
+          {settings.preferences.avatar ? (
+            <img src={settings.preferences.avatar} alt="Profile" className="avatar-img-fill-small" />
+          ) : (user && user.email) 
             ? user.email[0].toUpperCase() 
             : (user && user.displayName) 
               ? user.displayName[0].toUpperCase() 

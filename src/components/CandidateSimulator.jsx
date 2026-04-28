@@ -11,9 +11,13 @@ import { SIM_SCENARIOS } from '../utils/constants';
  * Main simulation experience.
  */
 export default function CandidateSimulator() {
-  const { day, budget, stats, history, phase, makeDecision, resetSim } = useSimulator();
+  const { day, budget, stats, history, phase, makeDecision, resetSim, isLoaded } = useSimulator();
   const { addXP } = useXP();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  if (!isLoaded) {
+    return null; // Or a brief loading spinner
+  }
 
   // 🛡️ SANITIZER: Prevent crash if phase data is missing
   const scenarios = SIM_SCENARIOS[phase] || SIM_SCENARIOS.early || [];
@@ -73,8 +77,8 @@ export default function CandidateSimulator() {
   return (
     <div className="sim-container">
       {/* LEFT: Stats */}
-      <div className="sim-stats-panel">
-        <h3>Campaign Status</h3>
+      <div className="sim-stats-panel premium-card-glass" style={{ border: 'none', borderRadius: '24px' }}>
+        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>Campaign Status</h3>
         <div className="budget-counter">₹{budget.toLocaleString()}</div>
         
         <div className="stat-bars">
@@ -97,7 +101,7 @@ export default function CandidateSimulator() {
 
       {/* CENTER: Scene */}
       <div className="sim-scene">
-        <div className="scene-card">
+        <div className="scene-card premium-card-glass" style={{ border: 'none', borderRadius: '28px' }}>
           <div className="scene-header">
             📍 Day {day} · {currentScene?.scene || 'Civic Mission'}
           </div>
@@ -108,24 +112,22 @@ export default function CandidateSimulator() {
             {(currentScene?.choices || []).map((choice) => (
               <button 
                 key={choice.id} 
-                className="choice-btn premium-choice"
+                className="choice-btn"
                 disabled={isProcessing || budget < (choice.cost || 0)}
                 onClick={() => handleChoice(choice)}
               >
-                <div className="choice-content">
-                  <div className="choice-main-text">{choice.text}</div>
-                  <div className="choice-sub-hint">{choice.hint}</div>
-                </div>
-                {(choice.cost || 0) > 0 && <span className="choice-cost-badge">-₹{(choice.cost || 0).toLocaleString()}</span>}
+                {choice.text}
+                {(choice.cost || 0) > 0 && ` (-₹${(choice.cost || 0).toLocaleString()})`}
               </button>
+
             ))}
           </div>
         </div>
       </div>
 
       {/* RIGHT: Dashboard */}
-      <div className="sim-dashboard">
-        <h3>Campaign Log</h3>
+      <div className="sim-dashboard premium-card-glass" style={{ border: 'none', borderRadius: '24px' }}>
+        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>Campaign Log</h3>
         <div className="log-list">
           {history.length === 0 ? (
             <div className="log-empty-state">

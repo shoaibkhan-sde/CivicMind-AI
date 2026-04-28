@@ -1,9 +1,9 @@
 /**
  * @fileoverview useSimulator — Hook for the Candidate Simulation adventure.
- * Manages campaign stats, budget, and scene transitions.
+ * Manages campaign stats, budget, scene transitions, and persistence.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import useAuth from './useAuth';
 
 const INITIAL_STATS = {
@@ -21,12 +21,43 @@ const STARTING_BUDGET = 500000;
  */
 export default function useSimulator() {
   const { user } = useAuth();
+  
   const [day, setDay] = useState(1);
   const [budget, setBudget] = useState(STARTING_BUDGET);
   const [stats, setStats] = useState(INITIAL_STATS);
   const [history, setHistory] = useState([]);
   const [phase, setPhase] = useState('nomination'); // nomination | campaign | voting | results
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from localStorage on mount when user is available
+  useEffect(() => {
+    if (user && !isLoaded) {
+      const stored = localStorage.getItem(`civic_sim_${user.uid}`);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setDay(parsed.day || 1);
+          setBudget(parsed.budget !== undefined ? parsed.budget : STARTING_BUDGET);
+          setStats(parsed.stats || INITIAL_STATS);
+          setHistory(parsed.history || []);
+          setPhase(parsed.phase || 'nomination');
+          setIsGameOver(parsed.isGameOver || false);
+        } catch (e) {
+          console.error('Failed to parse simulation data', e);
+        }
+      }
+      setIsLoaded(true);
+    }
+  }, [user, isLoaded]);
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    if (user && isLoaded) {
+      const simData = { day, budget, stats, history, phase, isGameOver };
+      localStorage.setItem(`civic_sim_${user.uid}`, JSON.stringify(simData));
+    }
+  }, [user, isLoaded, day, budget, stats, history, phase, isGameOver]);
 
   /**
    * Process a user decision.
@@ -56,10 +87,18 @@ export default function useSimulator() {
       setIsGameOver(true);
       setPhase('results');
     } else {
-      setDay(prev => prev + 1);
+      const nextDay = day + 1;
+      setDay(nextDay);
+      
+      // Phase Transitions
+      if (nextDay > 25) {
+        setPhase('voting');
+      } else if (nextDay > 5) {
+        setPhase('campaign');
+      } else {
+        setPhase('nomination');
+      }
     }
-    
-    // In a real app, we would call /api/simulate here to get narrative
   }, [day]);
 
   const resetSim = useCallback(() => {
@@ -69,7 +108,10 @@ export default function useSimulator() {
     setHistory([]);
     setPhase('nomination');
     setIsGameOver(false);
-  }, []);
+    if (user) {
+      localStorage.removeItem(`civic_sim_${user.uid}`);
+    }
+  }, [user]);
 
   return {
     day,
@@ -79,6 +121,7 @@ export default function useSimulator() {
     phase,
     isGameOver,
     makeDecision,
-    resetSim
+    resetSim,
+    isLoaded // Can be used to prevent rendering UI until state is hydrated
   };
 }

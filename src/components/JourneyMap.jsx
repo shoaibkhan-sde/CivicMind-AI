@@ -7,6 +7,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import SageHero from './SageHero';
+import ConfirmModal from './ConfirmModal';
 import StageCard from './StageCard';
 import useJourney from '../hooks/useJourney';
 import useSageChat from '../hooks/useSageChat';
@@ -26,7 +27,9 @@ import {
   Calculator,
   Trophy,
   Lock,
-  Check
+  Check,
+  ChevronDown,
+  Trash2
 } from 'lucide-react';
 
 const STAGE_ICON_MAP = {
@@ -46,9 +49,11 @@ const STAGE_ICON_MAP = {
 function JourneyMap() {
   const { allStages, completedStages, currentStage, isLocked } = useJourney();
   const [selectedStageId, setSelectedStageId] = useState(currentStage.id);
-  const { messages, sendMessage, isLoading } = useSageChat();
+  const { messages, sendMessage, isLoading, clearChat } = useSageChat('journey');
   const { xpState } = useXP();
   const chatRef = useRef(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   // 🔥 Auto-progression: When a stage is completed, jump to the next one!
   useEffect(() => {
@@ -60,6 +65,24 @@ function JourneyMap() {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
+
+  const handleScroll = () => {
+    if (chatRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatRef.current;
+      // Show button if user has scrolled up more than 150px from bottom
+      const isUp = scrollHeight - scrollTop - clientHeight > 150;
+      setShowScrollButton(isUp);
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (chatRef.current) {
+      chatRef.current.scrollTo({
+        top: chatRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const selectedStage = allStages.find(s => s.id === selectedStageId);
 
@@ -81,8 +104,18 @@ function JourneyMap() {
                 <div 
                   className="mission-node"
                   onClick={() => !locked && setSelectedStageId(stage.id)}
-                  aria-label={`Stage ${stage.order}: ${stage.title}`}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'Enter' || e.key === ' ') && !locked) {
+                      e.preventDefault();
+                      setSelectedStageId(stage.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={locked ? -1 : 0}
+                  aria-disabled={locked}
+                  aria-label={`Stage ${stage.order}: ${stage.title}${locked ? ' (Locked)' : ''}`}
                 >
+
                   <div className={`node-circle ${isDone ? 'completed' : ''} ${isActive ? 'active' : ''} ${locked ? 'locked' : ''} ${isSelected ? 'selected' : ''}`}>
                     {isDone ? <Check size={16} /> : locked ? <Lock size={14} /> : STAGE_ICON_MAP[stage.id] || stage.icon}
                   </div>
@@ -113,7 +146,10 @@ function JourneyMap() {
                 <Bot size={24} className="icon-blue" />
                 <h3>Sage · Civic Mentor</h3>
               </div>
-              <span className="live-badge">Live</span>
+              
+              <div className="assistant-actions">
+                <span className="live-badge">Live</span>
+              </div>
             </header>
 
             <div className="assistant-context">
@@ -121,7 +157,7 @@ function JourneyMap() {
               <span>Context: {selectedStage?.title} Stage · Level: {xpState.level}</span>
             </div>
 
-            <div className="assistant-messages" ref={chatRef}>
+            <div className="assistant-messages" ref={chatRef} onScroll={handleScroll}>
               {messages.length === 0 ? (
                 <div className="chat-row assistant">
                   <div className="chat-avatar"><Sparkles size={16} /></div>
@@ -155,8 +191,27 @@ function JourneyMap() {
               )}
             </div>
 
+            {/* Scroll to Bottom Button */}
+            <button 
+              className={`scroll-bottom-btn ${showScrollButton ? 'visible' : ''}`}
+              onClick={scrollToBottom}
+              aria-label="Scroll to bottom"
+            >
+              <ChevronDown size={20} />
+            </button>
+
             <div className="assistant-input-area">
               <div className="input-container-premium">
+                {messages.length > 0 && (
+                  <button 
+                    className="btn-clear-chat-small" 
+                    onClick={() => setIsClearModalOpen(true)}
+                    title="Clear history"
+                    style={{ marginLeft: '12px', marginRight: '-4px' }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
                 <input 
                   type="text" 
                   placeholder="Ask Sage anything..."
@@ -185,6 +240,16 @@ function JourneyMap() {
           </div>
         </aside>
       </div>
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        title="Clear Journey Chat?"
+        message="This will permanently delete your conversation with Sage in this tab. Are you sure?"
+        onConfirm={() => {
+          clearChat();
+          setIsClearModalOpen(false);
+        }}
+        onCancel={() => setIsClearModalOpen(false)}
+      />
     </div>
   );
 }

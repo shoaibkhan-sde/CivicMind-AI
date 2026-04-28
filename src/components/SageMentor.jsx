@@ -5,21 +5,41 @@
 import React, { useRef, useEffect } from 'react';
 import useSageChat from '../hooks/useSageChat';
 import useXP from '../hooks/useXP';
-import { Bot, Trash2, SendHorizontal, Sparkles } from 'lucide-react';
+import { Bot, Trash2, SendHorizontal, Sparkles, ChevronDown } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 /**
  * Sage Mentor view.
  */
 export default function SageMentor() {
-  const { messages, sendMessage, isLoading, clearChat } = useSageChat();
+  const { messages, sendMessage, isLoading, clearChat } = useSageChat('mentor');
   const { xpState } = useXP();
   const scrollRef = useRef(null);
+  const [showScrollButton, setShowScrollButton] = React.useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = React.useState(false);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isUp = scrollHeight - scrollTop - clientHeight > 150;
+      setShowScrollButton(isUp);
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -36,7 +56,7 @@ export default function SageMentor() {
         <Bot size={24} className="icon-blue" />
       </div>
 
-      <div className="mentor-chat-window" ref={scrollRef}>
+      <div className="mentor-chat-window" ref={scrollRef} onScroll={handleScroll}>
         {messages.length === 0 ? (
           <div className="mentor-welcome">
             <div className="welcome-icon-vector"><Sparkles size={48} className="icon-gold" /></div>
@@ -69,8 +89,26 @@ export default function SageMentor() {
         )}
       </div>
 
+      <button 
+        className={`scroll-bottom-btn ${showScrollButton ? 'visible' : ''}`}
+        onClick={scrollToBottom}
+        aria-label="Scroll to bottom"
+      >
+        <ChevronDown size={24} />
+      </button>
+
       <div className="mentor-input-container">
         <form className="mentor-input-form-premium" onSubmit={handleSend}>
+          {messages.length > 0 && (
+            <button 
+              type="button" 
+              className="mentor-clear-btn" 
+              onClick={() => setIsClearModalOpen(true)}
+              title="Clear History"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
           <input 
             name="message" 
             autoComplete="off" 
@@ -82,6 +120,16 @@ export default function SageMentor() {
           </button>
         </form>
       </div>
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        title="Clear Mentor History?"
+        message="This will delete your entire conversation with Sage the Mentor. This action cannot be undone."
+        onConfirm={() => {
+          clearChat();
+          setIsClearModalOpen(false);
+        }}
+        onCancel={() => setIsClearModalOpen(false)}
+      />
     </div>
   );
 }
