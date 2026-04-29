@@ -4115,4 +4115,476 @@ body {
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   DUOLINGO-STYLE DESIGN SYSTEM
+   ════════════════════════════════════════════════════════════════ */
 
+/* ── SAGE Owl Animations ─────────────────────────────────────── */
+@keyframes owl-bounce {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-6px) scale(1.08); }
+}
+@keyframes owl-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-6px); }
+  40%     { transform: translateX(6px); }
+  60%     { transform: translateX(-4px); }
+  80%     { transform: translateX(4px); }
+}
+@keyframes owl-pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%     { transform: scale(1.06); opacity: 0.8; }
+}
+@keyframes owl-celebrate {
+  from { transform: rotate(-8deg) scale(1); }
+  to   { transform: rotate(8deg) scale(1.12); }
+}
+
+/* ── Confetti Fall ───────────────────────────────────────────── */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(var(--rotate, 360deg)); opacity: 0; }
+}
+
+/* ── Fade In ─────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Streak Flash ────────────────────────────────────────────── */
+@keyframes streak-flash {
+  0%,100% { filter: drop-shadow(0 0 4px rgba(251,146,60,0.8)); }
+  50%     { filter: drop-shadow(0 0 16px rgba(251,146,60,1)); transform: scale(1.2); }
+}
+
+/* ── Duolingo Top Bar ────────────────────────────────────────── */
+.duolingo-topbar {
+  height: 60px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.duolingo-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 80px;
+}
+
+.streak-display {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.streak-flame {
+  font-size: 18px;
+  transition: filter 0.3s ease;
+  filter: grayscale(1) opacity(0.4);
+}
+.streak-flame.active {
+  filter: none;
+  animation: streak-flash 2s ease infinite;
+}
+.streak-count {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* ── Daily Goal Bar ──────────────────────────────────────────── */
+.daily-goal-center {
+  flex: 1;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+.daily-goal-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+.daily-goal-track {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: visible;
+  position: relative;
+}
+.daily-goal-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+.daily-goal-fill.complete {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+.daily-goal-burst {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  animation: owl-bounce 0.5s ease infinite alternate;
+}
+
+.duolingo-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 80px;
+  justify-content: flex-end;
+}
+.topbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+}
+
+/* ── XP Badge ────────────────────────────────────────────────── */
+.xp-badge-duo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.xp-lightning { font-size: 14px; }
+.xp-value { color: var(--text-primary); }
+
+/* ── Hearts Bar ──────────────────────────────────────────────── */
+.hearts-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hearts-icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.heart-icon { display: inline-block; }
+.heart-timer {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--error);
+  background: rgba(239,68,68,0.1);
+  padding: 2px 6px;
+  border-radius: 99px;
+  margin-left: 4px;
+}
+
+/* ── League Badge Button ─────────────────────────────────────── */
+.league-badge-btn {
+  border: none;
+  font-family: var(--font-main);
+}
+
+/* ── Fullscreen Lesson Shell ─────────────────────────────────── */
+.lesson-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* Lesson top bar */
+.lesson-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+.lesson-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.lesson-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.lesson-progress-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lesson-progress-track {
+  flex: 1;
+  height: 14px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lesson-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.lesson-review-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  background: var(--blue-subtle);
+  padding: 3px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+/* Lesson body (scrollable) */
+.lesson-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  gap: 0;
+}
+
+.lesson-owl-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.owl-speech-bubble {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  position: relative;
+}
+.owl-speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: var(--border-subtle);
+}
+
+.lesson-question {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 28px;
+}
+
+.lesson-hint-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+/* Lesson options */
+.lesson-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lesson-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 2px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-family: var(--font-main);
+}
+.lesson-option:hover:not(:disabled) {
+  border-color: var(--blue);
+  background: var(--blue-subtle);
+  transform: scale(1.015);
+}
+.lesson-option:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.lesson-option:disabled {
+  cursor: default;
+}
+.lesson-option.correct {
+  border-color: var(--success);
+  background: var(--success-bg);
+  color: var(--success);
+}
+.lesson-option.wrong {
+  border-color: var(--error);
+  background: rgba(239,68,68,0.08);
+  color: var(--error);
+  opacity: 0.6;
+  animation: owl-shake 0.4s ease;
+}
+.lesson-option-letter {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.lesson-option-text { flex: 1; }
+.lesson-option-icon { flex-shrink: 0; }
+.correct-icon { color: var(--success); }
+.wrong-icon   { color: var(--error); }
+
+/* ── Duolingo Bottom Panel ───────────────────────────────────── */
+.lesson-bottom-panel {
+  flex-shrink: 0;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 2px solid transparent;
+  animation: slide-up 0.25s ease;
+}
+.lesson-bottom-panel.correct {
+  background: var(--success-bg);
+  border-color: rgba(16,185,129,0.3);
+}
+.lesson-bottom-panel.wrong {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.3);
+}
+.bottom-panel-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+}
+.bottom-panel-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.bottom-panel-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.lesson-bottom-panel.correct .bottom-panel-title { color: var(--success); }
+.lesson-bottom-panel.wrong   .bottom-panel-title { color: var(--error); }
+.bottom-panel-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.lesson-check-btn {
+  padding: 14px 28px;
+  border-radius: 16px;
+  border: none;
+  font: 800 15px/1 var(--font-main);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  flex-shrink: 0;
+}
+.lesson-check-btn:active { transform: scale(0.96) translateY(2px); }
+.lesson-check-btn.correct {
+  background: var(--success);
+  color: white;
+  box-shadow: 0 4px 16px rgba(16,185,129,0.4);
+}
+.lesson-check-btn.correct:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.5); }
+.lesson-check-btn.wrong {
+  background: var(--error);
+  color: white;
+  box-shadow: 0 4px 16px rgba(239,68,68,0.4);
+}
+.lesson-check-btn.wrong:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(239,68,68,0.5); }
+
+.lesson-bottom-neutral {
+  flex-shrink: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── League Modal Backdrop ───────────────────────────────────── */
+.league-modal {
+  position: relative;
+  z-index: 901;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .duolingo-topbar { padding: 0 12px; gap: 8px; }
+  .daily-goal-center { display: none; }
+  .lesson-body { padding: 20px 16px; }
+  .lesson-topbar { padding: 10px 16px; }
+  .lesson-question { font-size: 18px; }
+  .lesson-option { padding: 14px 16px; font-size: 14px; }
+  .lesson-bottom-panel { padding: 16px; flex-direction: column; }
+  .lesson-check-btn { width: 100%; }
+  .xp-value { display: none; }
+}
+
+[data-theme='light'] .duolingo-topbar {
+  background: white;
+  border-bottom-color: var(--border-subtle);
+}
+[data-theme='light'] .lesson-shell { background: #f8fafc; }
+[data-theme='light'] .lesson-topbar { background: white; }
+[data-theme='light'] .lesson-option { background: white; border-color: #e2e8f0; color: var(--text-main); }
+[data-theme='light'] .lesson-option:hover:not(:disabled) { background: var(--blue-subtle); }
+[data-theme='light'] .lesson-bottom-panel.correct { background: rgba(16,185,129,0.06); }
+[data-theme='light'] .lesson-bottom-panel.wrong { background: rgba(239,68,68,0.06); }

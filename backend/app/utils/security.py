@@ -5,6 +5,8 @@ from firebase_admin import auth
 import logging
 from pydantic import BaseModel, Field, validator
 
+logger = logging.getLogger(__name__)
+
 from typing import List, Optional, Dict
 
 class ChatRequest(BaseModel):

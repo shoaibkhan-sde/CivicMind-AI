@@ -1,6 +1,9 @@
-from flask import Flask
+from flask import Flask, request
 from config import config_by_name
 from .extensions import limiter, talisman, cors, init_firebase
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_app(config_name="development"):
     app = Flask(__name__)

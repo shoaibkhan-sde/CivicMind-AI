@@ -12,6 +12,7 @@ import { AuthProvider } from './contexts/AuthContext.jsx';
 import { SettingsProvider } from './contexts/SettingsContext.jsx';
 import { ProgressionProvider } from './contexts/ProgressionContext.jsx';
 import { JourneyProvider } from './contexts/JourneyContext.jsx';
+import { HeartsProvider } from './contexts/HeartsContext.jsx';
 
 const rootElement = document.getElementById('root');
 
@@ -24,9 +25,11 @@ createRoot(rootElement).render(
     <AuthProvider>
       <SettingsProvider>
         <ProgressionProvider>
-          <JourneyProvider>
-            <App />
-          </JourneyProvider>
+          <HeartsProvider>
+            <JourneyProvider>
+              <App />
+            </JourneyProvider>
+          </HeartsProvider>
         </ProgressionProvider>
       </SettingsProvider>
     </AuthProvider>

@@ -23,13 +23,14 @@ class AIService:
         api_key = current_app.config.get("GEMINI_API_KEY")
         project = current_app.config.get("VERTEX_PROJECT")
         location = current_app.config.get("VERTEX_LOCATION", "us-central1")
+        model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
         if project and VERTEX_AVAILABLE:
             try:
                 vertexai.init(project=project, location=location)
-                cls._model = GenerativeModel("gemini-1.5-flash")
+                cls._model = GenerativeModel(model_name)
                 cls._use_vertex = True
-                logger.info("Vertex AI initialized successfully")
+                logger.info("Vertex AI initialized with model: %s", model_name)
                 return
             except Exception as e:
                 logger.warning("Vertex AI initialization failed, falling back to Gemini API: %s", str(e))
@@ -37,14 +38,14 @@ class AIService:
         if api_key:
             genai.configure(api_key=api_key)
             cls._model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name=model_name,
                 system_instruction=(
                     "You are SAGE — a wise, warm civic mentor owl who guides Indian citizens. "
                     "Max 3 sentences. Emoji start."
                 )
             )
             cls._use_vertex = False
-            logger.info("Gemini API initialized successfully")
+            logger.info("Gemini API initialized with model: %s", model_name)
         else:
             logger.error("No AI credentials found")
 

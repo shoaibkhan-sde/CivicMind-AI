@@ -1,6 +1,6 @@
 /**
  * @fileoverview App.jsx — CivicMind AI Adventure Shell.
- * Character-driven navigation and state orchestration.
+ * Duolingo-style top bar with streak, daily goal, hearts, and league.
  */
 
 import React, { lazy, Suspense, useState, useCallback, useEffect } from 'react';
@@ -9,21 +9,21 @@ import AuthModal from './components/AuthModal.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import XPNotification from './components/XPNotification.jsx';
 import XPToast from './components/XPToast.jsx';
+import HeartsBar from './components/HeartsBar.jsx';
+import LeagueBadge from './components/LeagueBadge.jsx';
+import SAGEOwl from './components/SAGEOwl.jsx';
 import useAuth from './hooks/useAuth.js';
 import useXP from './hooks/useXP.js';
 import { TABS } from './utils/constants.js';
-import { Zap, Flame, CloudUpload } from 'lucide-react';
+import { DAILY_GOAL_XP } from './utils/leagues.js';
+import { CloudUpload } from 'lucide-react';
 
-// ── Lazy-loaded adventure views ──────────────────────────────────────────────
 const JourneyMap = lazy(() => import('./components/JourneyMap.jsx'));
 const CandidateSimulator = lazy(() => import('./components/CandidateSimulator.jsx'));
 const SageMentor = lazy(() => import('./components/SageMentor.jsx'));
 const QuizView = lazy(() => import('./components/QuizView.jsx'));
 const SettingsView = lazy(() => import('./components/SettingsView.jsx'));
 
-/**
- * Suspense fallback.
- */
 function TabFallback() {
   return (
     <div className="suspense-fallback" aria-label="Loading adventure...">
@@ -32,9 +32,6 @@ function TabFallback() {
   );
 }
 
-/**
- * Root application component.
- */
 function App() {
   const [activeTab, setActiveTab] = useState(TABS.JOURNEY);
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
@@ -44,7 +41,6 @@ function App() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [isVictory, setIsVictory] = useState(false);
 
-  // ── Level Up & Victory Detection ──
   useEffect(() => {
     if (xpState.level > lastLevel) {
       setIsVictory(false);
@@ -54,39 +50,32 @@ function App() {
   }, [xpState.level, lastLevel]);
 
   useEffect(() => {
-    const handleVictory = () => {
-      setIsVictory(true);
-      setShowLevelUp(true);
-    };
+    const handleVictory = () => { setIsVictory(true); setShowLevelUp(true); };
     window.addEventListener('civic_victory', handleVictory);
     return () => window.removeEventListener('civic_victory', handleVictory);
   }, []);
 
-  const handleTabChange = useCallback((tabId) => {
-    setActiveTab(tabId);
-  }, []);
+  const handleTabChange = useCallback((tabId) => setActiveTab(tabId), []);
 
   const renderTab = () => {
     switch (activeTab) {
-      case TABS.JOURNEY:
-        return <JourneyMap />;
-      case TABS.SIMULATE:
-        return <CandidateSimulator />;
-      case TABS.MENTOR:
-        return <SageMentor />;
-      case TABS.QUIZ:
-        return <QuizView />;
-      case TABS.SETTINGS:
-        return <SettingsView />;
-      default:
-        return <JourneyMap />;
+      case TABS.JOURNEY:   return <JourneyMap />;
+      case TABS.SIMULATE:  return <CandidateSimulator />;
+      case TABS.MENTOR:    return <SageMentor />;
+      case TABS.QUIZ:      return <QuizView />;
+      case TABS.SETTINGS:  return <SettingsView />;
+      default:             return <JourneyMap />;
     }
   };
+
+  // Daily goal progress (capped at 100%)
+  const dailyXP = xpState.dailyXP ?? 0;
+  const dailyPct = Math.min(100, Math.round((dailyXP / DAILY_GOAL_XP) * 100));
+  const goalMet = dailyPct >= 100;
 
   return (
     <div className="app-shell">
       <a href="#main-content" className="skip-link sr-only">Skip to main content</a>
-      {/* Main Sidebar */}
 
       <NavBar
         activeTab={activeTab}
@@ -96,34 +85,48 @@ function App() {
         onAvatarClick={() => setAuthModalOpen(true)}
       />
 
-      {/* Main Viewport */}
       <main className="main" id="main-content">
-        <header className="header-top">
-          <div className="header-title">
-            <h1>Civic Adventure</h1>
-            <div className="level-status">
-              <p>{xpState.title} · Level {xpState.level}</p>
-              <div className="level-progress-track">
-                <div 
-                  className="level-progress-fill" 
-                  style={{ width: `${xpState.progressToNext}%` }}
-                />
-              </div>
+        {/* ── Duolingo-style Top Bar ── */}
+        <header className="duolingo-topbar">
+          {/* Left: SAGE owl + streak */}
+          <div className="duolingo-topbar-left">
+            <SAGEOwl
+              state={xpState.isTodayActive ? 'happy' : 'idle'}
+              size={32}
+            />
+            <div className="streak-display" title="Daily Streak">
+              <span className={`streak-flame ${xpState.isTodayActive ? 'active' : ''}`}>🔥</span>
+              <span className="streak-count">{xpState.streak}</span>
             </div>
           </div>
-          <div className="header-badges">
-            <div className="badge xp" title="Total XP">
-              <Zap size={14} className="icon-gold" />
-              <span>{xpState.xp} XP</span>
+
+          {/* Center: Daily XP goal bar */}
+          <div className="daily-goal-center">
+            <div className="daily-goal-label">
+              <span>{goalMet ? '✅ Daily goal complete!' : `Daily goal · ${dailyXP}/${DAILY_GOAL_XP} XP`}</span>
             </div>
-            <div className={`badge streak ${xpState.isTodayActive ? 'active' : ''}`} title="Daily Streak">
-              <Flame size={14} className={xpState.isTodayActive ? 'icon-orange' : 'icon-muted'} />
-              <span>{xpState.streak}</span>
+            <div className="daily-goal-track">
+              <div
+                className={`daily-goal-fill ${goalMet ? 'complete' : ''}`}
+                style={{ width: `${dailyPct}%` }}
+              />
+              {goalMet && <span className="daily-goal-burst">⚡</span>}
+            </div>
+          </div>
+
+          {/* Right: Hearts + League + XP + Save */}
+          <div className="duolingo-topbar-right">
+            <HeartsBar />
+            <div className="topbar-divider" />
+            <LeagueBadge />
+            <div className="topbar-divider" />
+            <div className="xp-badge-duo" title="Total XP">
+              <span className="xp-lightning">⚡</span>
+              <span className="xp-value">{xpState.xp.toLocaleString()}</span>
             </div>
             {isGuest && (
               <button className="badge save" onClick={() => setAuthModalOpen(true)}>
-                <CloudUpload size={14} />
-                Save
+                <CloudUpload size={14} /> Save
               </button>
             )}
           </div>
@@ -138,35 +141,22 @@ function App() {
         </Suspense>
       </main>
 
-      {/* Overlays */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />
 
       {showLevelUp && (
-        <XPNotification 
-          newLevel={xpState.level} 
-          newTitle={xpState.title} 
+        <XPNotification
+          newLevel={xpState.level}
+          newTitle={xpState.title}
           isVictory={isVictory}
-          onClose={() => {
-            setShowLevelUp(false);
-            setIsVictory(false);
-          }} 
+          onClose={() => { setShowLevelUp(false); setIsVictory(false); }}
         />
       )}
 
-      {/* XP Gain Toasts */}
       <div className="xp-toast-container">
         {notifications.map(note => (
-          <XPToast 
-            key={note.id} 
-            amount={note.amount} 
-            onComplete={() => removeNotification(note.id)} 
-          />
+          <XPToast key={note.id} amount={note.amount} onComplete={() => removeNotification(note.id)} />
         ))}
       </div>
-
     </div>
   );
 }

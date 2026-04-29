@@ -1,7 +1,7 @@
 /**
  * @fileoverview useQuiz hook — state machine for the knowledge quiz.
  * Manages question progression, answer selection, score calculation,
- * and phase transitions using useReducer.
+ * phase transitions, and backwards navigation using useReducer.
  */
 
 import { useReducer, useCallback } from 'react';
@@ -17,11 +17,13 @@ import { QUIZ_QUESTIONS } from '../utils/constants.js';
  * @property {number} score - Number of correct answers so far
  * @property {number|null} selectedIndex - Index of the user's selected option, or null
  * @property {QuizPhase} phase - Current phase of the quiz
+ * @property {Object.<number, {selectedIndex: number}>} answeredQuestions - Per-question answer history
  */
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 const SELECT_ANSWER = 'SELECT_ANSWER';
 const NEXT_QUESTION = 'NEXT_QUESTION';
+const PREVIOUS_QUESTION = 'PREVIOUS_QUESTION';
 const RESET = 'RESET';
 
 /** @type {QuizState} */
@@ -30,6 +32,7 @@ const initialState = {
   score: 0,
   selectedIndex: null,
   phase: 'playing',
+  answeredQuestions: {}, // { [questionIndex]: { selectedIndex: number } }
 };
 
 /**
@@ -54,6 +57,11 @@ function quizReducer(state, action) {
         selectedIndex: action.payload,
         score: isCorrect ? state.score + 1 : state.score,
         phase: 'answered',
+        // Persist this question's answer so we can restore it when navigating back
+        answeredQuestions: {
+          ...state.answeredQuestions,
+          [state.currentIndex]: { selectedIndex: action.payload },
+        },
       };
     }
 
@@ -65,17 +73,34 @@ function quizReducer(state, action) {
       const isLastQuestion = state.currentIndex >= QUIZ_QUESTIONS.length - 1;
 
       if (isLastQuestion) {
-        return {
-          ...state,
-          phase: 'results',
-        };
+        return { ...state, phase: 'results' };
       }
+
+      const nextIndex = state.currentIndex + 1;
+      const nextAnswer = state.answeredQuestions[nextIndex];
 
       return {
         ...state,
-        currentIndex: state.currentIndex + 1,
-        selectedIndex: null,
-        phase: 'playing',
+        currentIndex: nextIndex,
+        // Restore previous answer if user is revisiting an already-answered question
+        selectedIndex: nextAnswer?.selectedIndex ?? null,
+        phase: nextAnswer ? 'answered' : 'playing',
+      };
+    }
+
+    case PREVIOUS_QUESTION: {
+      if (state.currentIndex === 0) {
+        return state; // Already at first question
+      }
+
+      const prevIndex = state.currentIndex - 1;
+      const prevAnswer = state.answeredQuestions[prevIndex];
+
+      return {
+        ...state,
+        currentIndex: prevIndex,
+        selectedIndex: prevAnswer?.selectedIndex ?? null,
+        phase: prevAnswer ? 'answered' : 'playing',
       };
     }
 
@@ -95,6 +120,7 @@ function quizReducer(state, action) {
  * @property {number} totalQuestions - Total number of questions
  * @property {Function} selectAnswer - Select an answer option by index
  * @property {Function} nextQuestion - Advance to the next question
+ * @property {Function} prevQuestion - Go back to the previous question
  * @property {Function} resetQuiz - Reset to initial state
  */
 
@@ -122,6 +148,13 @@ function useQuiz() {
   }, []);
 
   /**
+   * Go back to the previous question for review.
+   */
+  const prevQuestion = useCallback(() => {
+    dispatch({ type: PREVIOUS_QUESTION });
+  }, []);
+
+  /**
    * Reset the quiz to its initial state.
    */
   const resetQuiz = useCallback(() => {
@@ -134,6 +167,7 @@ function useQuiz() {
     totalQuestions: QUIZ_QUESTIONS.length,
     selectAnswer,
     nextQuestion,
+    prevQuestion,
     resetQuiz,
   };
 }
