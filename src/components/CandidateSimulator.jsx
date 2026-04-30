@@ -21,8 +21,8 @@ export default function CandidateSimulator() {
 
   // 🛡️ SANITIZER: Prevent crash if phase data is missing
   const scenarios = SIM_SCENARIOS[phase] || SIM_SCENARIOS.early || [];
-  const currentScene = scenarios.length > 0 
-    ? scenarios[history.length % scenarios.length] 
+  const currentScene = scenarios.length > 0
+    ? scenarios[history.length % scenarios.length]
     : { scene: 'Campaign Trail', description: 'Meeting with the people.', prompt: 'What will you say?', choices: [] };
 
   const handleChoice = async (choice) => {
@@ -30,7 +30,9 @@ export default function CandidateSimulator() {
     // Simulate AI delay
     setTimeout(() => {
       makeDecision(choice);
-      addXP(20);
+      if (choice.xp) {
+        addXP(choice.xp);
+      }
       setIsProcessing(false);
     }, 800);
   };
@@ -42,7 +44,7 @@ export default function CandidateSimulator() {
         <div className="results-premium-card">
           <div className="results-trophy">{isWinner ? '🏆' : '🕯️'}</div>
           <h2 className="results-heading">{isWinner ? 'A Historic Victory!' : 'The People have Spoken'}</h2>
-          
+
           <div className="results-score-row">
             <div className="score-box">
               <span className="score-label">Final Trust</span>
@@ -56,7 +58,7 @@ export default function CandidateSimulator() {
 
           <div className="results-narrative">
             <p>
-              {isWinner 
+              {isWinner
                 ? "You have earned the mandate of the people through integrity and vision. Your campaign will be remembered as a blueprint for clean, effective civic leadership."
                 : "While the numbers didn't reach the majority, your journey has sparked critical conversations. In a democracy, every voice raised is a victory for the constitution."}
             </p>
@@ -77,10 +79,10 @@ export default function CandidateSimulator() {
   return (
     <div className="sim-container">
       {/* LEFT: Stats */}
-      <div className="sim-stats-panel premium-card-glass" style={{ border: 'none', borderRadius: '24px' }}>
+      <div className="sim-stats-panel">
         <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>Campaign Status</h3>
         <div className="budget-counter">₹{budget.toLocaleString()}</div>
-        
+
         <div className="stat-bars">
           {Object.entries(stats).map(([key, val]) => (
             <div key={key} className="stat-bar-group">
@@ -89,9 +91,9 @@ export default function CandidateSimulator() {
                 <span>{val}%</span>
               </div>
               <div className="stat-track">
-                <div 
-                  className={`stat-fill ${key}`} 
-                  style={{ width: `${val}%`, backgroundColor: key === 'trust' ? '#10b981' : key === 'reach' ? '#3b82f6' : '#f59e0b' }} 
+                <div
+                  className={`stat-fill ${key}`}
+                  style={{ width: `${val}%`, backgroundColor: key === 'trust' ? '#10b981' : key === 'reach' ? '#3b82f6' : '#f59e0b' }}
                 />
               </div>
             </div>
@@ -101,38 +103,45 @@ export default function CandidateSimulator() {
 
       {/* CENTER: Scene */}
       <div className="sim-scene">
-        <div className="scene-card premium-card-glass" style={{ border: 'none', borderRadius: '28px' }}>
+        <div className="scene-card">
           <div className="scene-header">
             📍 Day {day} · {currentScene?.scene || 'Civic Mission'}
           </div>
-          <p className="scene-desc">{currentScene?.description || 'Loading scenario...'}</p>
-          <h4 className="scene-prompt">{currentScene?.prompt || 'Make your move, candidate.'}</h4>
           
-          <div className="choice-grid">
-            {(currentScene?.choices || []).map((choice) => (
-              <button 
-                key={choice.id} 
-                className="choice-btn"
-                disabled={isProcessing || budget < (choice.cost || 0)}
-                onClick={() => handleChoice(choice)}
-              >
-                {choice.text}
-                {(choice.cost || 0) > 0 && ` (-₹${(choice.cost || 0).toLocaleString()})`}
-              </button>
+          <div className="scene-content-scroll">
+            <p className="scene-desc">{currentScene?.description || 'Loading scenario...'}</p>
+            <h4 className="scene-prompt">{currentScene?.prompt || 'Make your move, candidate.'}</h4>
 
-            ))}
+            <div className="choice-grid">
+              {(currentScene?.choices || []).map((choice) => (
+                <button
+                  key={choice.id}
+                  className="choice-btn"
+                  disabled={isProcessing || budget < (choice.cost || 0)}
+                  onClick={() => handleChoice(choice)}
+                >
+                  <div className="choice-letter">
+                    {String.fromCharCode(65 + (currentScene.choices.indexOf(choice)))}
+                  </div>
+                  <div className="choice-content">
+                    <span className="choice-main-text">{choice.text}</span>
+                    {(choice.cost || 0) > 0 && <span className="choice-cost-badge">-₹{(choice.cost || 0).toLocaleString()}</span>}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* RIGHT: Dashboard */}
-      <div className="sim-dashboard premium-card-glass" style={{ border: 'none', borderRadius: '24px' }}>
-        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>Campaign Log</h3>
+      <div className="sim-dashboard">
+        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>Decision Journey</h3>
         <div className="log-list">
           {history.length === 0 ? (
             <div className="log-empty-state">
-              <p>Your campaign journey starts here...</p>
-              <small>Every decision will be recorded here for your civic review.</small>
+              <p>Your story starts here...</p>
+              <small>The choices you make will be saved here so you can review your leadership path later.</small>
             </div>
           ) : (
             history.slice().reverse().map((entry, i) => (

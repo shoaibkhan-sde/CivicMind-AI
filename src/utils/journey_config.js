@@ -112,6 +112,7 @@ export const SIM_SCENARIOS = {
           id: 'wait',
           text: 'Wait in the line',
           cost: 0,
+          xp: 40,
           stats: { trust: +10, corruption: 0 },
           hint: 'Fair Play: Everyone follows the same rules.',
           lesson: 'Rule of Law: A good leader never breaks the line. This builds respect from other citizens.'
@@ -120,6 +121,7 @@ export const SIM_SCENARIOS = {
           id: 'bribe',
           text: 'Pay to jump the line',
           cost: 5000,
+          xp: -50,
           stats: { trust: -25, corruption: +30 },
           hint: '⚠️ High Risk',
           lesson: 'Anti-Bribery Law: Giving money for a favor is a crime. You can be banned for 6 years.'
@@ -128,6 +130,7 @@ export const SIM_SCENARIOS = {
           id: 'check',
           text: 'Double check your papers',
           cost: 0,
+          xp: 15,
           stats: { momentum: +10 },
           hint: 'Accuracy: Small mistakes cost big.',
           lesson: 'Many candidates lose their chance because of simple spelling errors in their forms.'
@@ -136,6 +139,7 @@ export const SIM_SCENARIOS = {
           id: 'help',
           text: 'Help an elderly citizen in line',
           cost: 0,
+          xp: 30,
           stats: { trust: +15, reach: +5 },
           hint: 'Civic Service: Lead by example.',
           lesson: 'Voters watch how you treat people. Compassion is a key trait of a servant leader.'
@@ -152,6 +156,7 @@ export const SIM_SCENARIOS = {
           id: 'full_disclosure',
           text: 'Full, honest disclosure',
           cost: 0,
+          xp: 50,
           stats: { trust: +20, momentum: +5 },
           hint: 'Integrity: Truth is your best armor.',
           lesson: 'Transparency: Voters have a right to know. False affidavits can lead to disqualification.'
@@ -160,6 +165,7 @@ export const SIM_SCENARIOS = {
           id: 'hide_assets',
           text: 'Hide some property',
           cost: 0,
+          xp: -60,
           stats: { trust: -30, corruption: +20 },
           hint: '⚠️ Legal Trap',
           lesson: 'Non-disclosure is a serious offense under the RP Act.'
@@ -168,6 +174,7 @@ export const SIM_SCENARIOS = {
           id: 'public_event',
           text: 'Turn filing into a media event',
           cost: 10000,
+          xp: 10,
           stats: { reach: +20, momentum: +10 },
           hint: 'Visibility: Make some noise.',
           lesson: 'Publicity helps, but ensure your message matches your actions.'
@@ -176,6 +183,7 @@ export const SIM_SCENARIOS = {
           id: 'educational_post',
           text: 'Explain the process on social media',
           cost: 2000,
+          xp: 25,
           stats: { reach: +10, trust: +10 },
           hint: 'Awareness: Educate your voters.',
           lesson: 'Empowered voters are your strongest supporters.'
@@ -194,6 +202,7 @@ export const SIM_SCENARIOS = {
           id: 'focus_issues',
           text: 'Focus on development issues',
           cost: 50000,
+          xp: 45,
           stats: { trust: +15, reach: +10 },
           hint: 'Statesmanship: Rise above.',
           lesson: 'Positive campaigning builds long-term credibility over temporary noise.'
@@ -202,6 +211,7 @@ export const SIM_SCENARIOS = {
           id: 'attack_back',
           text: 'Counter-attack with personal insults',
           cost: 10000,
+          xp: 0,
           stats: { momentum: +20, trust: -15 },
           hint: 'Polarization: Excites the base.',
           lesson: 'Hate speech and personal attacks can violate the Model Code of Conduct.'
@@ -210,6 +220,7 @@ export const SIM_SCENARIOS = {
           id: 'community_feast',
           text: 'Organize a community feast (Langar)',
           cost: 100000,
+          xp: -40,
           stats: { reach: +30, corruption: +10 },
           hint: '⚠️ MCC Boundary',
           lesson: 'Inducing voters with food or gifts is a corrupt practice.'
@@ -218,6 +229,7 @@ export const SIM_SCENARIOS = {
           id: 'town_hall',
           text: 'Conduct a Q&A Town Hall',
           cost: 20000,
+          xp: 35,
           stats: { trust: +25, reach: +5 },
           hint: 'Direct Engagement: Listen to the people.',
           lesson: 'Participatory democracy starts with listening to constituents.'
@@ -234,6 +246,7 @@ export const SIM_SCENARIOS = {
           id: 'legal_action',
           text: 'File a defamation case and Cyber Cell report',
           cost: 15000,
+          xp: 30,
           stats: { trust: +10, momentum: +5 },
           hint: 'Legal Recourse: Fight back with law.',
           lesson: 'Rule of Law: The legal system has mechanisms to fight "Fake News".'
@@ -242,6 +255,7 @@ export const SIM_SCENARIOS = {
           id: 'video_rebuttal',
           text: 'Release a live video with evidence',
           cost: 0,
+          xp: 40,
           stats: { trust: +20, reach: +15 },
           hint: 'Direct Communication: Transparency wins.',
           lesson: 'Transparency is the strongest antidote to misinformation.'
@@ -250,6 +264,7 @@ export const SIM_SCENARIOS = {
           id: 'ignore_it',
           text: 'Ignore it and focus on your work',
           cost: 0,
+          xp: 5,
           stats: { reach: -10, trust: -5 },
           hint: '⚠️ Perception Risk',
           lesson: 'In the digital age, silence can sometimes be seen as an admission of guilt.'
@@ -258,6 +273,7 @@ export const SIM_SCENARIOS = {
           id: 'fake_counter',
           text: 'Release a fake video about the opponent',
           cost: 20000,
+          xp: -100,
           stats: { reach: +20, corruption: +40 },
           hint: '⚠️ Dark Arts',
           lesson: 'Creating fake content is unethical and can lead to criminal charges.'
@@ -277,6 +293,7 @@ export const SIM_SCENARIOS = {
           id: 'stop_them',
           text: 'Order them to stop and move away',
           cost: 0,
+          xp: 50,
           stats: { trust: +20, momentum: -5 },
           hint: 'Rule Follower: Strict MCC compliance.',
           lesson: 'No campaigning is allowed within 100 meters of the polling station.'
@@ -285,6 +302,7 @@ export const SIM_SCENARIOS = {
           id: 'ignore',
           text: 'Look the other way',
           cost: 0,
+          xp: -40,
           stats: { corruption: +15, reach: +5 },
           hint: '⚠️ Silent Complicity',
           lesson: 'Leaders are responsible for the actions of their workers.'
@@ -293,6 +311,7 @@ export const SIM_SCENARIOS = {
           id: 'thank_voters',
           text: 'Thank people for voting (Generic)',
           cost: 0,
+          xp: 15,
           stats: { trust: +10, reach: +10 },
           hint: 'Gratitude: Support the process.',
           lesson: 'Encouraging voting is good, but stay within the legal boundary.'
@@ -301,6 +320,7 @@ export const SIM_SCENARIOS = {
           id: 'monitor_booth',
           text: 'Check for malfunctioning EVMs',
           cost: 0,
+          xp: 25,
           stats: { trust: +15, momentum: +5 },
           hint: 'Vigilance: Protect the vote.',
           lesson: 'Candidates have the right to ensure the voting process is fair and tech-error free.'

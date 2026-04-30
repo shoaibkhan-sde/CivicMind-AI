@@ -33,7 +33,9 @@ function TabFallback() {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState(TABS.JOURNEY);
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('civic_active_tab') || TABS.JOURNEY;
+  });
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const { xpState, notifications, removeNotification } = useXP();
   const { user, isGuest } = useAuth();
@@ -42,12 +44,16 @@ function App() {
   const [isVictory, setIsVictory] = useState(false);
 
   useEffect(() => {
+    localStorage.setItem('civic_active_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
     if (xpState.level > lastLevel) {
       setIsVictory(false);
       setShowLevelUp(true);
       setLastLevel(xpState.level);
     }
-  }, [xpState.level, lastLevel]);
+  }, [xpState.level, lastLevel, setIsVictory, setShowLevelUp, setLastLevel]);
 
   useEffect(() => {
     const handleVictory = () => { setIsVictory(true); setShowLevelUp(true); };

@@ -52,7 +52,16 @@ export function HeartsProvider({ children }) {
       setHearts(prev => {
         if (prev >= MAX_HEARTS) return prev;
         setNextRefillAt(nra => {
-          if (now >= nra) {
+          // Fix for migrating from 4 hours to 5 minutes:
+          // If the scheduled refill is further in the future than the new constant, adjust it.
+          let currentNra = nra;
+          if (currentNra - now > HEART_REFILL_MS) {
+            currentNra = now + HEART_REFILL_MS;
+            localStorage.setItem(LS_REFILL_AT, String(currentNra));
+            // Note: we don't spam firebase here, we'll wait for the next real state change to sync.
+          }
+
+          if (now >= currentNra) {
             const newHearts = Math.min(prev + 1, MAX_HEARTS);
             const newRefill = newHearts < MAX_HEARTS ? now + HEART_REFILL_MS : 0;
             localStorage.setItem(LS_HEARTS, String(newHearts));
@@ -62,7 +71,7 @@ export function HeartsProvider({ children }) {
             }
             return newRefill;
           }
-          return nra;
+          return currentNra;
         });
         return prev;
       });

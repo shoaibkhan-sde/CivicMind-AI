@@ -17,9 +17,9 @@ export default function XPToast({ amount, onComplete }) {
   }, [onComplete]);
 
   return (
-    <div className={`xp-toast ${visible ? 'show' : ''}`}>
+    <div className={`xp-toast ${visible ? 'show' : ''} ${amount < 0 ? 'negative' : ''}`}>
       <span className="xp-toast-icon">⚡</span>
-      <span className="xp-toast-amount">+{amount} XP</span>
+      <span className="xp-toast-amount">{amount > 0 ? `+${amount}` : amount} XP</span>
     </div>
   );
 }

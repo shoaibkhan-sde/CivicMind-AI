@@ -214,8 +214,7 @@ function KnowledgeQuiz({ onComplete = null, onReset = null }) {
           )}
         </div>
 
-        {/* Right: hearts */}
-        <HeartsBar />
+        {/* Right: hearts removed to avoid duplication with global topbar */}
       </div>
 
       {/* ── Question Body ── */}

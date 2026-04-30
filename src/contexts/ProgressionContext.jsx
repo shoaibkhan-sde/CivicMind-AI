@@ -159,9 +159,9 @@ export function ProgressionProvider({ children }) {
 
   const addXP = useCallback(async (amount) => {
     setXpState(prev => {
-      const newXp = prev.xp + amount;
-      const newWeekly = prev.weeklyXP + amount;
-      const newDaily = prev.dailyXP + amount;
+      const newXp = Math.max(0, prev.xp + amount);
+      const newWeekly = Math.max(0, prev.weeklyXP + amount);
+      const newDaily = Math.max(0, prev.dailyXP + amount);
       localStorage.setItem('civic_xp_temp', newXp.toString());
       localStorage.setItem('civic_weekly_xp', newWeekly.toString());
       localStorage.setItem('civic_daily_xp', newDaily.toString());
@@ -174,6 +174,8 @@ export function ProgressionProvider({ children }) {
     updateStreak();
 
     if (user && db) {
+      // Note: Firebase increment(negative) works fine, but we'll use a transaction style if we really want to cap at 0 in DB.
+      // For now, simpler update:
       await update(ref(db, `users/${user.uid}/profile`), {
         xp: increment(amount),
         weeklyXP: increment(amount),
@@ -185,8 +187,53 @@ export function ProgressionProvider({ children }) {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
+  const resetProgression = useCallback(async () => {
+    const freshState = {
+      xp: 0,
+      level: 1,
+      title: 'New Voter',
+      streak: 0,
+      lastActivityDate: null,
+      progressToNext: 0,
+      isTodayActive: false,
+      weeklyXP: 0,
+      dailyXP: 0,
+      dailyGoal: DAILY_GOAL_XP,
+      league: getLeague(0),
+    };
+
+    setXpState(freshState);
+
+    // Clear Local Storage selectively but thoroughly
+    // We clear everything except the active tab and settings
+    const allKeys = Object.keys(localStorage);
+    const keysToClear = allKeys.filter(k => 
+      k.startsWith('civic') && 
+      k !== 'civic_active_tab' && 
+      k !== 'civicmind_settings'
+    );
+    keysToClear.forEach(k => localStorage.removeItem(k));
+
+    // Clear Firebase if logged in
+    if (user && db) {
+      try {
+        await update(ref(db, `users/${user.uid}/profile`), {
+          xp: 0,
+          streak: 0,
+          lastActivityDate: null,
+          weeklyXP: 0,
+          dailyXP: 0,
+          dailyDate: null,
+          weeklyDate: null
+        });
+      } catch (e) {
+        console.error('Firebase reset error', e);
+      }
+    }
+  }, [user]);
+
   return (
-    <ProgressionContext.Provider value={{ xpState, addXP, updateStreak, notifications, removeNotification }}>
+    <ProgressionContext.Provider value={{ xpState, addXP, updateStreak, resetProgression, notifications, removeNotification }}>
       {children}
     </ProgressionContext.Provider>
   );

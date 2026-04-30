@@ -108,10 +108,7 @@ function LessonComplete({ score, total, earnedXP = 0, onContinue, onRetry, lesso
           </div>
         </div>
 
-        {/* Hearts remaining */}
-        <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'center' }}>
-          <HeartsBar />
-        </div>
+
 
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: '12px' }}>

@@ -1,6 +1,8 @@
 import React, { useContext, useState } from 'react';
 import useAuth from '../hooks/useAuth.js';
 import useSageChat from '../hooks/useSageChat.js';
+import useXP from '../hooks/useXP.js';
+import { useHearts } from '../contexts/HeartsContext.jsx';
 import { SettingsContext } from '../contexts/SettingsContext.jsx';
 import { useJourney } from '../contexts/JourneyContext.jsx';
 import ConfirmModal from './ConfirmModal';
@@ -25,9 +27,10 @@ export default function SettingsView() {
   const { settings, updateSettings, isHydrated } = useContext(SettingsContext);
   const { clearChat } = useSageChat();
   const { resetJourney } = useJourney();
+  const { resetProgression } = useXP();
+  const { refillAllHearts } = useHearts();
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // ... previous logic
+  const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', action: null });
 
   const handleClearChat = () => {
     setConfirmState({
@@ -58,18 +61,36 @@ export default function SettingsView() {
     updateSettings('preferences', { fontSize: parseInt(e.target.value, 10) });
   };
 
-  const [confirmState, setConfirmState] = useState({ isOpen: false, title: '', message: '', action: null });
-
   const handleResetProgress = () => {
     setConfirmState({
       isOpen: true,
       title: "Reset Progress?",
       message: "Are you sure you want to reset your quiz and journey progress? This will clear all completed stages, streaks, and XP.",
       action: async () => {
-        await resetJourney();
-        localStorage.removeItem('civic_xp_temp');
-        localStorage.removeItem('civic_streak_temp');
-        window.location.reload();
+        setIsDeleting(true);
+        try {
+          // 1. Reset Journey (Firebase + Local)
+          await resetJourney();
+          
+          // 2. Reset Progression (Firebase + Local - XP, Streaks)
+          await resetProgression();
+
+          // 3. Reset Hearts
+          await refillAllHearts();
+
+          // 4. Clear Simulator Cache
+          if (user) {
+            localStorage.removeItem(`civic_sim_${user.uid}`);
+          }
+          
+          // Extended delay to ensure DB listeners are detached and writes are complete
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } catch (e) {
+          logger.error('Failed to reset all data', e);
+          setIsDeleting(false);
+        }
       }
     });
   };
@@ -101,12 +122,12 @@ export default function SettingsView() {
                   {settings.preferences.avatar ? (
                     <img src={settings.preferences.avatar} alt="Profile" className="avatar-img-fill" />
                   ) : (
-                    user.displayName ? user.displayName.charAt(0) : 'U'
+                    user?.displayName ? user.displayName.charAt(0) : 'U'
                   )}
                 </div>
                 <div className="user-details">
-                  <h3>{user.displayName || 'Civic Explorer'}</h3>
-                  <p>{user.email}</p>
+                  <h3>{user?.displayName || 'Civic Explorer'}</h3>
+                  <p>{user?.email || 'Syncing account...'}</p>
                 </div>
               </div>
 
@@ -119,7 +140,7 @@ export default function SettingsView() {
                     onClick={() => updateSettings('preferences', { avatar: null })}
                   >
                     <div className="avatar-preview-circle initial">
-                      {user.displayName ? user.displayName.charAt(0) : 'U'}
+                      {user?.displayName ? user.displayName.charAt(0) : 'U'}
                     </div>
                   </button>
                   {AVATARS.map((av) => (
@@ -134,11 +155,12 @@ export default function SettingsView() {
                   ))}
                 </div>
               </div>
-              <div className="account-actions" style={{ display: 'flex', gap: '10px' }}>
+          <div className="account-actions" style={{ display: 'flex', gap: '10px' }}>
                 <button className="badge btn-signout" style={{ flex: 1 }} onClick={signOut}>Sign Out</button>
                 <button 
                   className="btn-settings-danger" 
                   style={{ flex: 1 }} 
+                  disabled={isDeleting}
                   onClick={() => setConfirmState({
                     isOpen: true,
                     title: "Delete Account?",
@@ -146,7 +168,7 @@ export default function SettingsView() {
                     action: () => alert("Account deletion is simulated. In production, this would trigger a Firebase Auth deletion.")
                   })}
                 >
-                  Delete Account
+                  {isDeleting ? 'Deleting...' : 'Delete Account'}
                 </button>
               </div>
             </>
@@ -260,7 +282,13 @@ export default function SettingsView() {
               <label className="setting-label">Wipe Progress</label>
               <p className="setting-desc">Reset all missions, XP, and streaks.</p>
             </div>
-            <button className="btn-settings-danger" onClick={handleResetProgress}>Reset All Data</button>
+            <button 
+              className="btn-settings-danger" 
+              disabled={isDeleting} 
+              onClick={handleResetProgress}
+            >
+              {isDeleting ? 'Resetting Data...' : 'Reset All Data'}
+            </button>
           </div>
         </div>
       </div>

@@ -323,7 +323,7 @@ function StageCard({ stageId }) {
       <div className="stage-content-body">
         {activeTab === 'story' && (
           <div className="tab-story">
-            <h3 className="tab-heading" style={{ fontSize: '28px', background: 'linear-gradient(to right, var(--blue), var(--text-primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '24px' }}>The Story of {stageTitle}</h3>
+            <h3 className="tab-heading-story">The Story of {stageTitle}</h3>
             <FlowDiagram nodes={(details.story || []).map((node, i) => ({
               ...node,
               fact: (details.facts || [])[i]
@@ -391,14 +391,14 @@ function StageCard({ stageId }) {
             </div>
 
             {(challengeResult || masteredSteps.includes(currentChallengeIndex)) && (
-              <div className={`challenge-feedback-premium ${masteredSteps.includes(currentChallengeIndex) ? 'correct' : challengeResult}`} style={{ marginTop: '24px', padding: '16px', borderRadius: '12px', background: challengeResult === 'wrong' && !masteredSteps.includes(currentChallengeIndex) ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)', border: challengeResult === 'wrong' && !masteredSteps.includes(currentChallengeIndex) ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(34, 197, 94, 0.2)' }}>
-                <div className="feedback-content" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? <CheckCircle size={24} className="feedback-icon" style={{ color: 'var(--green)', flexShrink: 0 }} /> : <AlertTriangle size={24} className="feedback-icon" style={{ color: 'var(--red)', flexShrink: 0 }} />}
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: 'var(--text-primary)', marginBottom: '4px' }}>
+              <div className={`challenge-feedback-premium ${masteredSteps.includes(currentChallengeIndex) ? 'correct' : challengeResult}`}>
+                <div className="feedback-content">
+                  {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? <CheckCircle size={24} className="feedback-icon" /> : <AlertTriangle size={24} className="feedback-icon" />}
+                  <div className="feedback-text-container">
+                    <span className="feedback-label">
                       {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? "Excellent!" : "Not quite!"}
                     </span>
-                    <span style={{ color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    <span className="feedback-desc">
                       {masteredSteps.includes(currentChallengeIndex) || challengeResult === 'correct'
                         ? activeChallenges[currentChallengeIndex]?.options?.find(opt => opt?.correct)?.feedback
                         : "Review the question carefully and try again."}
@@ -408,20 +408,18 @@ function StageCard({ stageId }) {
               </div>
             )}
 
-            <div className="mastery-nav-controls" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
+            <div className="mastery-nav-controls">
               <button 
-                className="btn" 
+                className="btn-nav" 
                 onClick={prevStep}
                 disabled={currentChallengeIndex === 0}
-                style={{ opacity: currentChallengeIndex === 0 ? 0.3 : 1, cursor: currentChallengeIndex === 0 ? 'not-allowed' : 'pointer' }}
               >
                 ← Previous
               </button>
               <button 
-                className="btn btn-primary" 
+                className="btn-nav btn-primary" 
                 onClick={nextStep}
                 disabled={currentChallengeIndex >= activeChallenges.length - 1}
-                style={{ opacity: currentChallengeIndex >= activeChallenges.length - 1 ? 0.3 : 1, cursor: currentChallengeIndex >= activeChallenges.length - 1 ? 'not-allowed' : 'pointer' }}
               >
                 Next Step →
               </button>
@@ -441,13 +439,13 @@ function StageCard({ stageId }) {
             {/* Stage Mastery Overlay */}
             {showStageComplete && (
               <div className="stage-mastery-overlay">
-                <div className="mastery-mini-card" style={{ background: 'var(--bg-elevated)', padding: '32px', borderRadius: '16px', border: '1px solid var(--blue)', boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)', textAlign: 'center' }}>
-                  <div className="mastery-icon" style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
-                  <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: 'var(--text-primary)' }}>Mission Mastered!</h3>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>You have successfully completed the {details.title} challenges. Your civic wisdom grows!</p>
-                  <div className="mastery-actions" style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-                    <button className="btn" onClick={() => setShowStageComplete(false)}>Stay Here</button>
-                    <button className="btn btn-primary" onClick={startNextMission}>Next Mission →</button>
+                <div className="mastery-mini-card">
+                  <div className="mastery-icon">🏆</div>
+                  <h3>Mission Mastered!</h3>
+                  <p>You have successfully completed the {details.title} challenges. Your civic wisdom grows!</p>
+                  <div className="mastery-actions">
+                    <button className="btn-action" onClick={() => setShowStageComplete(false)}>Stay Here</button>
+                    <button className="btn-action btn-primary" onClick={startNextMission}>Next Mission →</button>
                   </div>
                 </div>
               </div>
@@ -459,74 +457,44 @@ function StageCard({ stageId }) {
           const rw = REAL_WORLD_DATA[stageId] || REAL_WORLD_DATA.announcement;
           return (
             <div className="tab-data">
-              <h3 className="tab-heading" style={{ marginBottom: '6px' }}>
+              <h3 className="tab-heading">
                 Real World · {stageTitle}
               </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '28px' }}>
+              <p className="tab-subtext">
                 Actual data, landmark rulings, and verified facts from Indian elections.
               </p>
 
               {/* Stats grid */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: '16px', marginBottom: '32px'
-              }}>
+              <div className="data-stats-grid">
                 {rw.stats.map((stat, i) => (
-                  <div key={i} style={{
-                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                    borderRadius: '16px', padding: '20px 16px', textAlign: 'center',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  }}
-                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'; }}
-                    onMouseOut={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-                  >
-                    <div style={{ fontSize: '28px', marginBottom: '8px' }}>{stat.icon}</div>
-                    <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--blue)', lineHeight: 1.1, marginBottom: '6px' }}>
-                      {stat.value}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                      {stat.label}
-                    </div>
+                  <div key={i} className="data-stat-card">
+                    <div className="data-stat-icon">{stat.icon}</div>
+                    <div className="data-stat-value">{stat.value}</div>
+                    <div className="data-stat-label">{stat.label}</div>
                   </div>
                 ))}
               </div>
 
               {/* Case studies */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <Newspaper size={16} style={{ color: 'var(--gold)' }} />
-                <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-                  Landmark Cases & Notable Events
-                </h4>
+              <div className="data-cases-header">
+                <Newspaper size={16} className="icon-gold" />
+                <h4>Landmark Cases & Notable Events</h4>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
+              <div className="data-cases-list">
                 {rw.cases.map((c, i) => (
-                  <div key={i} style={{
-                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                    borderRadius: '16px', padding: '20px 22px',
-                    borderLeft: '3px solid var(--blue)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-                      <span style={{ fontSize: '26px', flexShrink: 0, marginTop: '2px' }}>{c.icon}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                          <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-primary)' }}>{c.title}</span>
-                          <span style={{
-                            fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)',
-                            background: 'var(--bg-surface)', padding: '3px 10px', borderRadius: '99px',
-                            border: '1px solid var(--border-subtle)', whiteSpace: 'nowrap',
-                          }}>{c.date}</span>
+                  <div key={i} className="data-case-item">
+                    <div className="data-case-content">
+                      <span className="data-case-icon">{c.icon}</span>
+                      <div className="data-case-text">
+                        <div className="data-case-header-row">
+                          <span className="data-case-title">{c.title}</span>
+                          <span className="data-case-date">{c.date}</span>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.65', margin: '0 0 12px' }}>
-                          {c.body}
-                        </p>
-                        <div style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '6px',
-                          background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
-                          borderRadius: '8px', padding: '6px 12px',
-                        }}>
-                          <CheckCircle size={13} style={{ color: 'var(--success)', flexShrink: 0 }} />
-                          <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--success)' }}>{c.verdict}</span>
+                        <p className="data-case-body">{c.body}</p>
+                        <div className="data-case-verdict">
+                          <CheckCircle size={13} className="icon-success" />
+                          <span>{c.verdict}</span>
                         </div>
                       </div>
                     </div>
@@ -539,15 +507,7 @@ function StageCard({ stageId }) {
                 href={rw.link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  background: 'var(--blue)', color: '#fff',
-                  padding: '12px 22px', borderRadius: '12px',
-                  fontSize: '14px', fontWeight: '600', textDecoration: 'none',
-                  transition: 'opacity 0.2s ease',
-                }}
-                onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
-                onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                className="data-external-link"
               >
                 <ExternalLink size={15} />
                 {rw.link.label}

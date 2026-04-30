@@ -31,5 +31,5 @@ export const DAILY_GOAL_XP = 20;
 /** Max hearts. */
 export const MAX_HEARTS = 5;
 
-/** Milliseconds between heart refills (4 hours). */
-export const HEART_REFILL_MS = 4 * 60 * 60 * 1000;
+/** Milliseconds between heart refills (5 minutes). */
+export const HEART_REFILL_MS = 5 * 60 * 1000;
