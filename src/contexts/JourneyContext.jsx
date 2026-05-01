@@ -4,6 +4,9 @@ import { database as db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import { JOURNEY_STAGES } from '../utils/constants';
 
+/**
+ * Context for managing the user's election learning journey progress.
+ */
 export const JourneyContext = createContext();
 
 export function JourneyProvider({ children }) {
@@ -148,6 +151,10 @@ export function JourneyProvider({ children }) {
   );
 }
 
+/**
+ * Custom hook to consume the JourneyContext.
+ * @returns {Object} { completedStages, stageProgress, updateStageProgress, currentStage, completeStage, isLocked, isHydrated, resetJourney, allStages }
+ */
 export const useJourney = () => {
   const context = useContext(JourneyContext);
   if (!context) throw new Error('useJourney must be used within a JourneyProvider');

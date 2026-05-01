@@ -11,6 +11,9 @@ import { database as db } from '../firebase';
 import useAuth from '../hooks/useAuth';
 import { MAX_HEARTS, HEART_REFILL_MS } from '../utils/leagues';
 
+/**
+ * Context for managing the heart-based life system.
+ */
 const HeartsContext = createContext();
 
 const LS_HEARTS = 'civic_hearts';
@@ -125,4 +128,8 @@ export function HeartsProvider({ children }) {
   );
 }
 
+/**
+ * Custom hook to consume the HeartsContext.
+ * @returns {Object} { hearts, maxHearts, loseHeart, refillAllHearts, secondsToRefill }
+ */
 export const useHearts = () => useContext(HeartsContext);

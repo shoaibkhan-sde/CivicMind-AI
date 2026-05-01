@@ -1,7 +1,8 @@
 import os
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, jsonify
 from config import config_by_name
 from .extensions import limiter, talisman, cors, init_firebase
+from .utils.errors import error_response
 import logging
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -44,7 +45,8 @@ def create_app(config_name="development"):
         app,
         content_security_policy=csp if not is_dev else False,
         force_https=not is_dev,
-        frame_options="DENY"
+        frame_options="DENY",
+        referrer_policy="no-referrer"
     )
 
     @app.before_request
@@ -74,6 +76,22 @@ def create_app(config_name="development"):
     app.register_blueprint(quiz_bp, url_prefix="/api/quiz")
     app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
     app.register_blueprint(simulation_bp, url_prefix="/api/simulate")
+    
+    # Global Error Handlers
+    @app.errorhandler(404)
+    def handle_404(e):
+        if request.path.startswith('/api/'):
+            return error_response("Endpoint not found", status_code=404, code="NOT_FOUND")
+        return send_from_directory(app.static_folder, 'index.html')
+
+    @app.errorhandler(429)
+    def handle_429(e):
+        return error_response("Too many requests", details=str(e.description), status_code=429, code="RATE_LIMIT_EXCEEDED")
+
+    @app.errorhandler(500)
+    def handle_500(e):
+        logger.error("Global 500 error: %s", str(e), exc_info=True)
+        return error_response("Internal server error", status_code=500, code="INTERNAL_SERVER_ERROR")
 
     
     @app.route("/api/health")

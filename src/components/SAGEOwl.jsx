@@ -29,9 +29,9 @@ function SAGEOwl({ state = 'idle', size = 40, className = '' }) {
         transition: 'filter 0.3s ease',
       }}
       role="img"
-      aria-label={`SAGE owl — ${state}`}
+      aria-label={`SAGE owl assistant — currently ${state}`}
     >
-      {expr.body}
+      <span aria-hidden="true">{expr.body}</span>
     </span>
   );
 }

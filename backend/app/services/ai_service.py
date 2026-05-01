@@ -1,6 +1,11 @@
 import os
 import logging
 
+"""
+AI Service module for CivicMind AI.
+Forces stable Gemini v1 API version and manages multi-model fallback logic.
+"""
+
 # Force stable v1 API version and Gemini API (not Vertex AI)
 # This MUST happen BEFORE google.generativeai is imported
 os.environ["GOOGLE_GENERATIVE_AI_API_VERSION"] = "v1"
@@ -20,6 +25,10 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class AIService:
+    """
+    Service class for interacting with Google Generative AI (Gemini).
+    Handles initialization, model switching, and chat generation.
+    """
     _model = None
     _use_vertex = False
 
@@ -47,7 +56,8 @@ class AIService:
             cls._model = genai.GenerativeModel(
                 model_name=model_name,
                 system_instruction=(
-                    "You are SAGE — a wise, warm civic mentor owl who guides Indian citizens. "
+                    "You are SAGE — a wise, warm civic mentor owl who guides Indian citizens through the election process with absolute accuracy. "
+                    "Refer to official ECI (Election Commission of India) terms like Form 6, Voter ID (EPIC), and EVM/VVPAT. "
                     "Max 3 sentences. Emoji start."
                 )
             )

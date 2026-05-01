@@ -90,7 +90,14 @@ export default function CandidateSimulator() {
                 <span className="capitalize">{key}</span>
                 <span>{val}%</span>
               </div>
-              <div className="stat-track">
+              <div 
+                className="stat-track" 
+                role="progressbar" 
+                aria-valuenow={val} 
+                aria-valuemin="0" 
+                aria-valuemax="100"
+                aria-label={`${key} progress`}
+              >
                 <div
                   className={`stat-fill ${key}`}
                   style={{ width: `${val}%`, backgroundColor: key === 'trust' ? '#10b981' : key === 'reach' ? '#3b82f6' : '#f59e0b' }}

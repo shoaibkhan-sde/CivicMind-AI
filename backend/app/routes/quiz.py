@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from ..services.quiz_service import QuizService
 from ..services.ai_service import AIService
 from ..utils.security import require_auth, require_json
+from ..utils.errors import error_response
 from ..extensions import limiter
 import json
 import logging
@@ -19,13 +20,13 @@ def submit():
         answers = data.get("answers", [])
         
         if not isinstance(answers, list) or len(answers) > 20:
-            return jsonify({"error": "Invalid answers array"}), 400
+            return error_response("Invalid answers array", status_code=400)
             
         score, feedback = QuizService.calculate_score(answers)
         return jsonify({"score": score, "total": len(answers), "feedback": feedback}), 200
     except Exception as e:
         logger.error("Quiz submit error: %s", str(e))
-        return jsonify({"error": "Internal error"}), 500
+        return error_response("Internal error", details=str(e), status_code=500)
 
 @quiz_bp.route("/adaptive", methods=["POST"])
 @require_json
@@ -62,7 +63,7 @@ def generate():
     
     reply, error = AIService.generate_reply(prompt)
     if error:
-        return jsonify({"error": "AI failed"}), 503
+        return error_response("AI failed", details=error, status_code=503)
         
     try:
         # Simple cleanup if AI adds markdown
@@ -81,4 +82,4 @@ def generate():
         return jsonify(quiz_data), 200
     except Exception as e:
         logger.error("Quiz parse error: %s. Reply was: %s", str(e), reply)
-        return jsonify({"error": "Failed to parse AI response"}), 500
+        return error_response("Failed to parse AI response", details=str(e), status_code=500)

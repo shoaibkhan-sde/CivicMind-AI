@@ -54,6 +54,7 @@ function LeagueBadge({ className = '' }) {
           </div>
           <button
             onClick={() => setOpen(false)}
+            aria-label="Close League Details"
             style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', flexShrink: 0 }}
           >
             <X size={20} />
@@ -114,6 +115,7 @@ function LeagueBadge({ className = '' }) {
       <button
         className={`league-badge-btn ${className}`}
         onClick={() => setOpen(true)}
+        aria-label={`View ${league.name} League Details`}
         title={`${league.name} League — ${xpState.weeklyXP || 0} XP this week`}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '5px',
@@ -129,7 +131,7 @@ function LeagueBadge({ className = '' }) {
         onMouseOver={e => e.currentTarget.style.boxShadow = `0 0 18px ${league.glow}`}
         onMouseOut={e => e.currentTarget.style.boxShadow = `0 0 10px ${league.glow}`}
       >
-        <span style={{ fontSize: '15px' }}>{league.icon}</span>
+        <span role="img" aria-label={league.name} style={{ fontSize: '15px' }}>{league.icon}</span>
         <span>{league.name}</span>
       </button>
 

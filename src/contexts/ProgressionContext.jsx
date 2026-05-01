@@ -5,14 +5,28 @@ import useAuth from '../hooks/useAuth';
 import { XP_LEVELS } from '../utils/constants';
 import { getLeague, DAILY_GOAL_XP } from '../utils/leagues';
 
+/**
+ * Context for managing user XP, levels, streaks, and league progression.
+ */
 const ProgressionContext = createContext();
 
+/**
+ * Checks if two dates are the same day (Year, Month, Date).
+ * @param {string|Date} d1 
+ * @param {string|Date} d2 
+ * @returns {boolean}
+ */
 const isSameDay = (d1, d2) => {
   if (!d1 || !d2) return false;
   const a = new Date(d1), b = new Date(d2);
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 };
 
+/**
+ * Checks if a date was yesterday.
+ * @param {string|Date} date 
+ * @returns {boolean}
+ */
 const isYesterday = (date) => {
   if (!date) return false;
   const y = new Date();
@@ -20,7 +34,10 @@ const isYesterday = (date) => {
   return isSameDay(date, y);
 };
 
-// Monday of current week (midnight UTC)
+/**
+ * Returns the ISO string for the start of the current week (Monday 00:00).
+ * @returns {string}
+ */
 function getWeekStart() {
   const now = new Date();
   const day = now.getDay(); // 0=Sun … 6=Sat
@@ -31,6 +48,12 @@ function getWeekStart() {
   return monday.toISOString();
 }
 
+/**
+ * Provider for user progression state.
+ * Manages XP, levels, streaks, and leagues with Firebase and LocalStorage sync.
+ * @param {Object} props
+ * @param {React.ReactNode} props.children
+ */
 export function ProgressionProvider({ children }) {
   const { user } = useAuth();
 
@@ -264,4 +287,8 @@ export function ProgressionProvider({ children }) {
   );
 }
 
+/**
+ * Custom hook to consume the ProgressionContext.
+ * @returns {Object} { xpState, addXP, updateStreak, resetProgression, notifications, removeNotification }
+ */
 export const useProgression = () => useContext(ProgressionContext);

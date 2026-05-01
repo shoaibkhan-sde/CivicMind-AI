@@ -33,6 +33,7 @@ export default function XPNotification({ newLevel, newTitle, isVictory, onClose 
     <div 
       className={`levelup-overlay ${isVisible ? 'active' : ''} ${isFinalLevel ? 'final-victory' : ''}`} 
       role="alert"
+      aria-live="assertive"
       onClick={() => {
         if (!isFinalLevel) {
           setIsVisible(false);

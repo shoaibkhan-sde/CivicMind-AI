@@ -19,7 +19,7 @@ export const STAGE_DETAILS = {
       { id: 'press', icon: '🎤', label: 'Press Note', detail: 'The ECI calls a press conference to announce the schedule.' },
       { id: 'mcc', icon: '📜', label: 'MCC Active', detail: 'The Model Code of Conduct starts immediately after announcement.' },
     ],
-    facts: ['📜 Code of Conduct starts Day 1', '🗳️ Over 900 Million voters'],
+    facts: ['📜 Code of Conduct starts Day 1', '🗳️ Over 960 Million voters', '📱 Use C-VIGIL app to report violations'],
     mistakes: [
       { title: 'New Announcements', consequence: 'MCC Violation', fix: 'Wait until after election results.' },
       { title: 'Transferring Officials', consequence: 'Action by ECI', fix: 'Take prior approval from the Election Commission.' },
@@ -31,7 +31,7 @@ export const STAGE_DETAILS = {
       { id: 'form6', icon: '📝', label: 'Form 6', detail: 'Citizens fill out Form 6 to register as new voters.' },
       { id: 'epic', icon: '🪪', label: 'EPIC Issued', detail: 'The ECI issues the Electoral Photo Identity Card (Voter ID).' },
     ],
-    facts: ['🪪 Must be 18 years old', '📝 Form 6 for new voters'],
+    facts: ['🪪 Must be 18 years old', '📝 Form 6 for new voters', '📱 Check name in Voter Helpline App'],
     mistakes: [
       { title: 'Missing Deadline', consequence: 'Cannot Vote', fix: 'Register before the cutoff date.' },
       { title: 'Multiple Registrations', consequence: 'Offense under RPA', fix: 'Delete duplicate entries immediately.' },

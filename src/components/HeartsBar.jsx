@@ -34,6 +34,8 @@ function HeartsBar({ className = '' }) {
           <span
             key={i}
             className={`heart-icon ${i < hearts ? 'active' : 'lost'}`}
+            role="img"
+            aria-label={i < hearts ? "Active Heart" : "Lost Heart"}
             style={{
               fontSize: '16px',
               transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
