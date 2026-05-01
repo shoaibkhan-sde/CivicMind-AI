@@ -122,7 +122,7 @@ function useGeminiChat(context = 'election_education') {
         };
 
 
-        const response = await fetch('/api/chat', {
+        const response = await fetch('/api/chat/', {
           method: 'POST',
           headers,
           body: JSON.stringify(payload),

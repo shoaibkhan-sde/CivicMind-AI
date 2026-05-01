@@ -47,7 +47,7 @@ export default function useSageChat(scope = 'mentor') {
     setError(null);
 
     try {
-      const token = await user?.getIdToken();
+      const token = (user && typeof user.getIdToken === 'function') ? await user.getIdToken() : null;
       
       // Construct the full Sage context object
       const sageContext = {
@@ -68,7 +68,7 @@ export default function useSageChat(scope = 'mentor') {
         return;
       }
 
-      const response = await fetch(`${API_URL}/chat`, {
+      const response = await fetch(`${API_URL}/chat/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export default function useSageChat(scope = 'mentor') {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || 'Failed to get Sage\'s response');
+        throw new Error(errData.details || errData.error || 'Failed to get Sage\'s response');
       }
 
       const data = await response.json();
@@ -99,13 +99,14 @@ export default function useSageChat(scope = 'mentor') {
       logger.info('Sage reply received', { stage: currentStage.id });
 
     } catch (err) {
-      logger.error('Sage Chat Error', err);
+      logger.error('Sage Chat Error', { message: err.message, stack: err.stack });
       setError(err.message);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: "Oops! My owl-senses are tingling. I'm having trouble connecting right now. 🦉",
         isError: true 
       }]);
+      console.error("Sage Chat detailed error:", err);
     } finally {
       setIsLoading(false);
     }

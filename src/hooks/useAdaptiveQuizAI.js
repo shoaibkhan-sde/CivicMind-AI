@@ -19,7 +19,7 @@ export default function useAdaptiveQuizAI() {
     setIsLoading(true);
     setError(null);
     try {
-      const token = await user?.getIdToken();
+      const token = (user && typeof user.getIdToken === 'function') ? await user.getIdToken() : null;
       const response = await fetch(`${API_URL}/quiz/generate`, {
         method: 'POST',
         headers: {

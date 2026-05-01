@@ -35,12 +35,18 @@ export function HeartsProvider({ children }) {
     if (!user || !db) return;
     const r = ref(db, `users/${user.uid}/hearts`);
     return onValue(r, (snap) => {
-      const data = snap.val();
-      if (data) {
+      if (snap.exists()) {
+        const data = snap.val();
         setHearts(Math.min(data.hearts ?? MAX_HEARTS, MAX_HEARTS));
         setNextRefillAt(data.nextRefillAt ?? 0);
         localStorage.setItem(LS_HEARTS, String(data.hearts ?? MAX_HEARTS));
         localStorage.setItem(LS_REFILL_AT, String(data.nextRefillAt ?? 0));
+      } else {
+        // No data in Firebase (deleted), reset to max hearts
+        setHearts(MAX_HEARTS);
+        setNextRefillAt(0);
+        localStorage.setItem(LS_HEARTS, String(MAX_HEARTS));
+        localStorage.setItem(LS_REFILL_AT, '0');
       }
     });
   }, [user]);
@@ -81,12 +87,13 @@ export function HeartsProvider({ children }) {
     return () => clearInterval(intervalRef.current);
   }, [user]);
 
-  const persist = useCallback((newHearts, newRefill) => {
+  const persist = useCallback(async (newHearts, newRefill) => {
     localStorage.setItem(LS_HEARTS, String(newHearts));
     localStorage.setItem(LS_REFILL_AT, String(newRefill));
     if (user && db) {
-      update(ref(db, `users/${user.uid}/hearts`), { hearts: newHearts, nextRefillAt: newRefill });
+      return await update(ref(db, `users/${user.uid}/hearts`), { hearts: newHearts, nextRefillAt: newRefill });
     }
+    return Promise.resolve();
   }, [user]);
 
   const loseHeart = useCallback(() => {
@@ -100,10 +107,10 @@ export function HeartsProvider({ children }) {
     });
   }, [nextRefillAt, persist]);
 
-  const refillAllHearts = useCallback(() => {
+  const refillAllHearts = useCallback(async () => {
     setHearts(MAX_HEARTS);
     setNextRefillAt(0);
-    persist(MAX_HEARTS, 0);
+    return await persist(MAX_HEARTS, 0);
   }, [persist]);
 
   // Seconds until next heart

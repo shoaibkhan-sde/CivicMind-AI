@@ -55,6 +55,12 @@ export function JourneyProvider({ children }) {
             localStorage.setItem(`civic_journey_${user.uid}`, JSON.stringify(mergedArray));
             return mergedArray;
           });
+        } else {
+          // No data in Firebase (deleted), clear local state
+          setCompletedStages([]);
+          setStageProgress({});
+          localStorage.removeItem(`civic_journey_${user.uid}`);
+          localStorage.removeItem(`civic_progress_${user.uid}`);
         }
       });
 
@@ -104,11 +110,12 @@ export function JourneyProvider({ children }) {
     if (db) {
       const journeyRef = ref(db, `users/${user.uid}/journey`);
       try {
-        await remove(journeyRef);
+        return await remove(journeyRef);
       } catch (e) {
         console.error('Failed to reset journey on Firebase', e);
       }
     }
+    return Promise.resolve();
   }, [user]);
 
   const currentStage = useMemo(() => {

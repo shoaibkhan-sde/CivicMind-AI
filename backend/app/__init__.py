@@ -1,12 +1,15 @@
-from flask import Flask, request
+import os
+from flask import Flask, request, send_from_directory
 from config import config_by_name
 from .extensions import limiter, talisman, cors, init_firebase
 import logging
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 logger = logging.getLogger(__name__)
 
 def create_app(config_name="development"):
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='../../dist', static_url_path='/')
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     app.config.from_object(config_by_name[config_name])
     
     # Initialize Extensions
@@ -23,11 +26,18 @@ def create_app(config_name="development"):
     is_dev = config_name == "development"
     csp = {
         "default-src": "'self'",
-        "script-src": ["'self'", "https://www.googletagmanager.com"],
-        "connect-src": ["'self'", "https://*.googleapis.com", "https://*.firebaseio.com"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://apis.google.com", "https://*.firebaseio.com"],
+        "connect-src": [
+            "'self'", 
+            "https://*.googleapis.com", 
+            "https://*.firebaseio.com", 
+            "https://*.run.app",
+            "https://civicmind-ai-651952507170.us-central1.run.app"
+        ],
+        "frame-src": ["'self'", "https://civicmind-ai-494416.firebaseapp.com", "https://apis.google.com"],
         "font-src": ["'self'", "https://fonts.gstatic.com"],
         "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        "img-src": ["'self'", "data:", "https:"],
+        "img-src": ["'self'", "data:", "https://*.googleusercontent.com"],
         "frame-ancestors": "'none'",
     }
     talisman.init_app(
@@ -49,6 +59,8 @@ def create_app(config_name="development"):
         from flask import g
         if hasattr(g, 'trace_id'):
             response.headers["X-Trace-ID"] = g.trace_id
+        # Required for Firebase/Google Sign-in popups
+        response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
         return response
 
     
@@ -67,5 +79,13 @@ def create_app(config_name="development"):
     @app.route("/api/health")
     def health_check():
         return {"status": "ok"}, 200
+
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        if path != "" and os.path.exists(app.static_folder + '/' + path):
+            return send_from_directory(app.static_folder, path)
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
         
     return app

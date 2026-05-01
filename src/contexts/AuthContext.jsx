@@ -47,7 +47,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!auth) {
-      setUser({ uid: 'demo-user', isAnonymous: true, displayName: null });
+      setUser({ 
+        uid: 'demo-user', 
+        isAnonymous: true, 
+        displayName: null,
+        getIdToken: async () => 'demo-token'
+      });
       setIsLoading(false);
       return;
     }
@@ -76,7 +81,13 @@ export function AuthProvider({ children }) {
       // Demo Mode
       logger.info('Demo Mode: Google sign-in simulated');
       await new Promise((resolve) => setTimeout(resolve, 800));
-      setUser({ uid: 'demo-google-123', isAnonymous: false, displayName: 'Demo User', email: 'demo@google.com' });
+      setUser({ 
+        uid: 'demo-google-123', 
+        isAnonymous: false, 
+        displayName: 'Demo User', 
+        email: 'demo@google.com',
+        getIdToken: async () => 'demo-token'
+      });
       return;
     }
     

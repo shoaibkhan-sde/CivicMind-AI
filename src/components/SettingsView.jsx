@@ -69,24 +69,21 @@ export default function SettingsView() {
       action: async () => {
         setIsDeleting(true);
         try {
-          // 1. Reset Journey (Firebase + Local)
-          await resetJourney();
+          // Perform all resets in parallel and wait for all to finish
+          await Promise.all([
+            resetJourney(),
+            resetProgression(),
+            refillAllHearts(),
+            // 4. Clear Simulator Cache
+            user ? localStorage.removeItem(`civic_sim_${user.uid}`) : Promise.resolve()
+          ]);
           
-          // 2. Reset Progression (Firebase + Local - XP, Streaks)
-          await resetProgression();
-
-          // 3. Reset Hearts
-          await refillAllHearts();
-
-          // 4. Clear Simulator Cache
-          if (user) {
-            localStorage.removeItem(`civic_sim_${user.uid}`);
-          }
+          logger.info('Reset All Data: Successfully cleared Journey, XP, Hearts, and Simulator.');
           
-          // Extended delay to ensure DB listeners are detached and writes are complete
+          // Small delay to let local state catch up before hard reload
           setTimeout(() => {
             window.location.reload();
-          }, 2000);
+          }, 1000);
         } catch (e) {
           logger.error('Failed to reset all data', e);
           setIsDeleting(false);

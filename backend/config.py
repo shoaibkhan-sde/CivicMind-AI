@@ -23,7 +23,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    RATELIMIT_STORAGE_URI = Config.REDIS_URL
+    RATELIMIT_STORAGE_URI = os.environ.get("REDIS_URL", "memory://")
 
 config_by_name = {
     "development": DevelopmentConfig,

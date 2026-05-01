@@ -26,7 +26,7 @@ export function getLeague(xp) {
 }
 
 /** Daily XP goal (≈ 1 lesson or challenge). */
-export const DAILY_GOAL_XP = 20;
+export const DAILY_GOAL_XP = 100;
 
 /** Max hearts. */
 export const MAX_HEARTS = 5;

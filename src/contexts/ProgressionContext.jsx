@@ -119,22 +119,44 @@ export function ProgressionProvider({ children }) {
     const userRef = ref(db, `users/${user.uid}/profile`);
     return onValue(userRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        const { level, title, progress } = calculateLevel(data.xp || 0);
-        const league = getLeague(data.xp || 0);
-        setXpState(prev => ({
-          ...prev,
-          xp: data.xp || 0,
-          level, title,
-          streak: data.streak || 0,
-          lastActivityDate: data.lastActivityDate || null,
-          progressToNext: progress,
-          isTodayActive: data.lastActivityDate ? isSameDay(new Date(data.lastActivityDate), new Date()) : false,
-          weeklyXP: data.weeklyXP || 0,
-          league,
-        }));
-      }
-    });
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const { level, title, progress } = calculateLevel(data.xp || 0);
+          const league = getLeague(data.xp || 0);
+          setXpState(prev => ({
+            ...prev,
+            xp: data.xp || 0,
+            level, title,
+            streak: data.streak || 0,
+            lastActivityDate: data.lastActivityDate || null,
+            progressToNext: progress,
+            isTodayActive: data.lastActivityDate ? isSameDay(new Date(data.lastActivityDate), new Date()) : false,
+            weeklyXP: data.weeklyXP || 0,
+            dailyXP: isSameDay(data.dailyDate, new Date()) ? (data.dailyXP || 0) : 0,
+            league,
+          }));
+          // Sync local storage as well to prevent stale data on reload
+          localStorage.setItem('civic_xp_temp', (data.xp || 0).toString());
+          localStorage.setItem('civic_streak_temp', (data.streak || 0).toString());
+          localStorage.setItem('civic_weekly_xp', (data.weeklyXP || 0).toString());
+          if (data.dailyDate) {
+            localStorage.setItem('civic_daily_xp', (isSameDay(data.dailyDate, new Date()) ? (data.dailyXP || 0) : 0).toString());
+            localStorage.setItem('civic_daily_date', data.dailyDate);
+          }
+        } else {
+          // Data deleted from Firebase, reset local state
+          const fresh = {
+            xp: 0, level: 1, title: 'New Voter', streak: 0, 
+            lastActivityDate: null, progressToNext: 0, isTodayActive: false,
+            weeklyXP: 0, dailyXP: 0, dailyGoal: DAILY_GOAL_XP,
+            league: getLeague(0)
+          };
+          setXpState(fresh);
+          // Also clear local storage to be sure
+          const keys = ['civic_xp_temp', 'civic_streak_temp', 'civic_weekly_xp', 'civic_daily_xp', 'civic_daily_date', 'civic_last_date_temp'];
+          keys.forEach(k => localStorage.removeItem(k));
+        }
+      });
   }, [user, calculateLevel]);
 
   const updateStreak = useCallback(async () => {
@@ -179,6 +201,8 @@ export function ProgressionProvider({ children }) {
       await update(ref(db, `users/${user.uid}/profile`), {
         xp: increment(amount),
         weeklyXP: increment(amount),
+        dailyXP: increment(amount),
+        dailyDate: new Date().toISOString()
       });
     }
   }, [user, updateStreak]);
@@ -217,7 +241,7 @@ export function ProgressionProvider({ children }) {
     // Clear Firebase if logged in
     if (user && db) {
       try {
-        await update(ref(db, `users/${user.uid}/profile`), {
+        return await update(ref(db, `users/${user.uid}/profile`), {
           xp: 0,
           streak: 0,
           lastActivityDate: null,
@@ -230,6 +254,7 @@ export function ProgressionProvider({ children }) {
         console.error('Firebase reset error', e);
       }
     }
+    return Promise.resolve();
   }, [user]);
 
   return (
