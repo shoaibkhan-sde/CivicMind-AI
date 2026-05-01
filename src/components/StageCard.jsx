@@ -1,240 +1,59 @@
 /**
- * @fileoverview StageCard — Detailed content for an election stage.
+ * @fileoverview StageCard — Lean wrapper orchestrating modular election stage content.
  */
 
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import FlowDiagram from './FlowDiagram';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { STAGE_DETAILS } from '../utils/constants';
 import { QUESTION_BANK } from '../utils/quiz_bank';
 import useXP from '../hooks/useXP';
 import useJourney from '../hooks/useJourney';
-import { BookOpen, AlertCircle, Target, Globe, AlertTriangle, CheckCircle, MapPin, BarChart2, Scale, ExternalLink, Newspaper } from 'lucide-react';
 
-// ── Real-world data per stage ─────────────────────────────────────────────────
-const REAL_WORLD_DATA = {
-  announcement: {
-    stats: [
-      { label: 'Voters in 2024 General Election', value: '96.8 Crore', icon: '🗳️' },
-      { label: 'Polling Stations Set Up', value: '10.5 Lakh', icon: '🏫' },
-      { label: 'Phases in 2024 Election', value: '7 Phases', icon: '📅' },
-      { label: 'Days of MCC Enforcement', value: '77 Days', icon: '📜' },
-    ],
-    cases: [
-      {
-        title: 'ECI Announces 2024 General Elections',
-        date: 'March 16, 2024',
-        body: 'Chief Election Commissioner Rajiv Kumar announced a 7-phase schedule from April 19 to June 1. The Model Code of Conduct came into effect immediately, restricting government announcements and transfers.',
-        verdict: 'ECI notified 543 Lok Sabha constituencies',
-        icon: '📢',
-      },
-      {
-        title: 'Historic Voter Registration Drive',
-        date: '2024',
-        body: 'The ECI ran "Meri Pehli Vote" campaigns targeting first-time voters aged 18–19. Over 1.8 crore new voters were added to the electoral roll ahead of the 2024 elections.',
-        verdict: '1.8 Crore new first-time voters registered',
-        icon: '📊',
-      },
-    ],
-    link: { label: 'Read the ECI Press Release', url: 'https://www.eci.gov.in' },
-  },
-  registration: {
-    stats: [
-      { label: 'Total Registered Voters (2024)', value: '96.8 Crore', icon: '👥' },
-      { label: 'Women Voters', value: '47.1 Crore', icon: '👩' },
-      { label: 'First-Time Voters (18–19 yrs)', value: '1.8 Crore', icon: '🌟' },
-      { label: 'NRI Registered Voters', value: '1.12 Lakh', icon: '✈️' },
-    ],
-    cases: [
-      {
-        title: 'Voter ID Becomes Proof of Address',
-        date: '2023',
-        body: 'The EPIC (Electoral Photo ID Card) was officially recognised as proof of address under multiple central government schemes, including Direct Benefit Transfers — boosting registration incentives.',
-        verdict: 'EPIC used in over 12 government schemes',
-        icon: '🪪',
-      },
-      {
-        title: 'Duplicate Voter ID Scandal in Bihar',
-        date: '2019',
-        body: 'ECI investigations uncovered ~4 lakh duplicate voter entries in certain districts of Bihar. Affected entries were deleted under Section 22 of the Representation of the People Act, 1950.',
-        verdict: '4 Lakh duplicate entries removed',
-        icon: '⚠️',
-      },
-    ],
-    link: { label: 'Register / Check Voter ID on NVSP', url: 'https://voters.eci.gov.in' },
-  },
-  nomination: {
-    stats: [
-      { label: 'Nominations Filed (2024 LS)', value: '8,360', icon: '📁' },
-      { label: 'Nominations Rejected', value: '1,290', icon: '❌' },
-      { label: 'Candidates After Withdrawal', value: '8,360', icon: '✅' },
-      { label: 'Candidates with Criminal Cases', value: '46%', icon: '⚠️' },
-    ],
-    cases: [
-      {
-        title: 'ADR vs Union of India — Mandatory Disclosure',
-        date: 'Supreme Court, 2002',
-        body: 'The Supreme Court directed that candidates must disclose their criminal antecedents, assets, and educational qualifications in their nomination affidavit. This landmark ruling created the current Form 26 system.',
-        verdict: 'Full disclosure mandatory for all candidates',
-        icon: '⚖️',
-      },
-      {
-        title: 'Nomination Rejected for Incomplete Affidavit',
-        date: '2023 State Elections',
-        body: 'Dozens of candidates in Rajasthan and MP assembly elections had their nominations rejected for leaving blank columns in Form 26, particularly sections related to pending criminal cases.',
-        verdict: 'Returning Officers reject incomplete affidavits',
-        icon: '📋',
-      },
-    ],
-    link: { label: 'View Candidate Affidavits on MyNeta', url: 'https://myneta.info' },
-  },
-  campaign: {
-    stats: [
-      { label: 'Campaign Expenditure Limit (LS)', value: '₹95 Lakh', icon: '💸' },
-      { label: 'MCC Violations Registered (2024)', value: '3,400+', icon: '🚨' },
-      { label: 'Cash Seized (2024 Elections)', value: '₹4,600 Crore', icon: '💰' },
-      { label: 'Paid News Cases Flagged', value: '2,800+', icon: '📰' },
-    ],
-    cases: [
-      {
-        title: 'WhatsApp Fake News Crackdown (2019)',
-        date: '2019 General Elections',
-        body: 'ECI partnered with WhatsApp to limit message forwarding to 5 chats. Over 3,000 pieces of misinformation were flagged through the "cVIGIL" citizen grievance app, with 90% resolved within 100 minutes.',
-        verdict: 'cVIGIL App resolved 95% complaints in <100 mins',
-        icon: '📱',
-      },
-      {
-        title: '₹4,600 Crore Seized in 2024',
-        date: 'April–June 2024',
-        body: 'ECI enforcement teams seized record ₹4,600 crore in cash, drugs, liquor, and freebies during the 2024 general elections — over 3x the 2019 seizures — using Flying Squads and SSTs.',
-        verdict: 'Record seizures — 3x more than 2019',
-        icon: '🚔',
-      },
-    ],
-    link: { label: 'File a Campaign Complaint via cVIGIL', url: 'https://cvigil.eci.gov.in' },
-  },
-  voting: {
-    stats: [
-      { label: 'Voter Turnout (2024 LS)', value: '65.79%', icon: '📊' },
-      { label: 'Women Turnout (2024)', value: '65.78%', icon: '👩' },
-      { label: 'EVMs Deployed', value: '55 Lakh+', icon: '🖥️' },
-      { label: 'Booths with Webcasting', value: '1.5 Lakh+', icon: '📷' },
-    ],
-    cases: [
-      {
-        title: 'World\'s Longest Polling Route — Arunachal',
-        date: '2024',
-        body: 'ECI officials trekked 2 days through dense forest to reach a single-voter polling station in Malogam, Arunachal Pradesh — demonstrating that every vote counts in Indian democracy.',
-        verdict: '1-voter booth in Malogam served faithfully',
-        icon: '🏔️',
-      },
-      {
-        title: 'EVM Tampering Allegations Dismissed',
-        date: '2019 — Supreme Court',
-        body: 'The Supreme Court upheld the integrity of EVMs while ordering VVPAT slip verification in at least 5 randomly selected polling stations per constituency to provide an independent audit trail.',
-        verdict: 'Supreme Court: No credible evidence of EVM tampering',
-        icon: '⚖️',
-      },
-    ],
-    link: { label: 'Track Voter Turnout Live on ECI', url: 'https://results.eci.gov.in' },
-  },
-  counting: {
-    stats: [
-      { label: 'Counting Centres (2024)', value: '1,100+', icon: '🏛️' },
-      { label: 'Observer Officials Deployed', value: '2,200+', icon: '👁️' },
-      { label: 'VVPAT Slips Cross-Verified', value: '5 / Constituency', icon: '🧾' },
-      { label: 'Time to Declare All Results', value: '~12 Hours', icon: '⏱️' },
-    ],
-    cases: [
-      {
-        title: 'Postal Ballot Decides Close Contest',
-        date: '2019 — Rajasthan By-Election',
-        body: 'In the Ramgarh constituency by-election, postal ballots proved decisive in a result decided by fewer than 2,000 votes. The ECI counted all postal ballots first, followed by EVM results, preventing delays.',
-        verdict: 'Postal ballots counted first — critical process',
-        icon: '✉️',
-      },
-      {
-        title: 'Strong Room Security Protocols',
-        date: 'Standard Practice',
-        body: 'EVMs are stored in triple-layer security after polling: CRPF guards outside, videography inside, and agent seals on the room. No EVM has ever been reported missing from a strong room in Indian election history.',
-        verdict: '100% EVM accountability maintained since 1998',
-        icon: '🔐',
-      },
-    ],
-    link: { label: 'Watch Live Counting on ECI Results', url: 'https://results.eci.gov.in' },
-  },
-  results: {
-    stats: [
-      { label: 'Seats for Lok Sabha Majority', value: '272 of 543', icon: '🏆' },
-      { label: 'NDA Seats Won (2024)', value: '293', icon: '📊' },
-      { label: 'I.N.D.I.A. Alliance Seats (2024)', value: '234', icon: '📊' },
-      { label: 'Women MPs Elected (2024)', value: '74', icon: '👩' },
-    ],
-    cases: [
-      {
-        title: '10th Schedule — Anti-Defection Law',
-        date: 'In Force Since 1985',
-        body: 'The Anti-Defection Law (10th Schedule) disqualifies any MP who voluntarily gives up party membership or votes against party whip. The Speaker of the Lok Sabha is the deciding authority — a power upheld by the Supreme Court in Kihoto Hollohan vs Zachillhu (1992).',
-        verdict: 'MPs disqualified if they switch parties post-election',
-        icon: '⚖️',
-      },
-      {
-        title: 'Historic 2024 Mandate — Coalition Government',
-        date: 'June 4, 2024',
-        body: 'The BJP won 240 seats in 2024 — short of the 272-majority mark — forming a coalition NDA government with allies JD(U) and TDP. This marked the first time since 2014 that a coalition was necessary, reshaping the political balance.',
-        verdict: 'Coalition government formed with 293 NDA seats',
-        icon: '🤝',
-      },
-    ],
-    link: { label: 'See Full 2024 Results on ECI', url: 'https://results.eci.gov.in' },
-  },
-};
+// Sub-components
+import StageTabs from './StageCard/StageTabs';
+import StoryTab from './StageCard/StoryTab';
+import MistakesTab from './StageCard/MistakesTab';
+import ChallengeTab from './StageCard/ChallengeTab';
+import DataTab from './StageCard/DataTab';
 
 /**
- * Renders the 4-tab immersive experience for a specific stage.
+ * Main StageCard component — Manages state and orchestrates views.
+ * @param {Object} props
+ * @param {string} props.stageId
  */
 function StageCard({ stageId }) {
-
   const [activeTab, setActiveTab] = useState('story');
   const [challengeResult, setChallengeResult] = useState(null);
   const [showStageComplete, setShowStageComplete] = useState(false);
-  const [xpFloats, setXpFloats] = useState([]); // [{ id, x, y, amount }]
+  const [xpFloats, setXpFloats] = useState([]);
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   
   const { addXP } = useXP();
   const { stageProgress, updateStageProgress, completeStage, allStages } = useJourney();
 
-  const details = STAGE_DETAILS[stageId] || STAGE_DETAILS.announcement || { story: [], facts: [], mistakes: [] };
+  const details = STAGE_DETAILS[stageId] || STAGE_DETAILS.announcement;
   const currentStageMeta = allStages?.find(s => s.id === stageId) || {};
   const stageTitle = currentStageMeta.title || (stageId.charAt(0).toUpperCase() + stageId.slice(1));
   const currentProgress = stageProgress[stageId] || { currentIndex: 0, masteredSteps: [] };
   
-  // Dynamically generate up to 5 challenges from QUESTION_BANK for this stage
-  const activeChallenges = React.useMemo(() => {
+  const activeChallenges = useMemo(() => {
     const stageQuestions = QUESTION_BANK.filter(q => q.stage === stageId).slice(0, 5);
-    if (stageQuestions.length > 0) {
-      return stageQuestions.map((q) => ({
-        question: q.question,
-        options: q.options.map((optText, index) => ({
-          id: String.fromCharCode(65 + index), // A, B, C, D
-          text: optText,
-          correct: index === q.correctIndex,
-          feedback: q.explanation // Detailed explanation
-        }))
-      }));
-    }
-    return details.challenges || [];
-  }, [stageId, details.challenges]);
+    return stageQuestions.length > 0 ? stageQuestions.map((q, index) => ({
+      question: q.question,
+      options: q.options.map((optText, i) => ({
+        id: String.fromCharCode(65 + i),
+        text: optText,
+        correct: i === q.correctIndex,
+        feedback: q.explanation
+      }))
+    })) : [];
+  }, [stageId]);
 
-  // 🛡️ SANITIZER: Prevent NaN or undefined from breaking the UI
   const currentChallengeIndex = (typeof currentProgress.currentIndex === 'number' && !isNaN(currentProgress.currentIndex)) 
-    ? currentProgress.currentIndex 
-    : 0;
+    ? currentProgress.currentIndex : 0;
     
   const masteredSteps = Array.isArray(currentProgress.masteredSteps) ? currentProgress.masteredSteps : [];
 
-  // 🔥 Reset state when switching missions
-  React.useEffect(() => {
+  useEffect(() => {
     setChallengeResult(null);
     setXpFloats([]);
     setActiveTab('story');
@@ -242,18 +61,12 @@ function StageCard({ stageId }) {
     setShowStageComplete(false);
   }, [stageId]);
 
-  const handleChallenge = (correct, e) => {
-    // 🛡️ SECURITY: Don't allow re-answering already mastered questions
+  const handleChallenge = useCallback((correct, e) => {
     if (masteredSteps.includes(currentChallengeIndex)) return;
 
     if (correct && challengeResult !== 'correct') {
       const rect = e.currentTarget.getBoundingClientRect();
-      const newFloat = {
-        id: Date.now(),
-        x: e.clientX || (rect.left + rect.width / 2),
-        y: e.clientY || rect.top,
-        amount: 20 // Upgraded to 20XP for premium
-      };
+      const newFloat = { id: Date.now(), x: e.clientX || (rect.left + rect.width / 2), y: e.clientY || rect.top, amount: 20 };
       setXpFloats(prev => [...prev, newFloat]);
       addXP(20);
       setChallengeResult('correct');
@@ -262,8 +75,7 @@ function StageCard({ stageId }) {
       const newMastered = [...masteredSteps, currentChallengeIndex];
       updateStageProgress(stageId, { masteredSteps: newMastered });
 
-      const isLastChallenge = currentChallengeIndex >= (activeChallenges.length - 1);
-      if (isLastChallenge) {
+      if (currentChallengeIndex >= (activeChallenges.length - 1)) {
         completeStage(stageId);
         if (stageId === 'results') {
           window.dispatchEvent(new CustomEvent('civic_victory'));
@@ -271,255 +83,43 @@ function StageCard({ stageId }) {
           setShowStageComplete(true);
         }
       }
-
-      // Clean up float after animation
-      setTimeout(() => {
-        setXpFloats(prev => prev.filter(f => f.id !== newFloat.id));
-      }, 1200);
+      setTimeout(() => setXpFloats(prev => prev.filter(f => f.id !== newFloat.id)), 1200);
     } else if (!correct) {
       setSelectedOptionId(e.currentTarget.getAttribute('data-opt-id'));
       setChallengeResult('wrong');
-      setTimeout(() => {
-        setChallengeResult(null);
-        setSelectedOptionId(null);
-      }, 5000); // Increased to 5 seconds
+      setTimeout(() => { setChallengeResult(null); setSelectedOptionId(null); }, 3000);
     }
-  };
-
-  const nextStep = () => {
-    if (currentChallengeIndex < activeChallenges.length - 1) {
-      updateStageProgress(stageId, { currentIndex: currentChallengeIndex + 1 });
-      setChallengeResult(null);
-      setSelectedOptionId(null);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentChallengeIndex > 0) {
-      updateStageProgress(stageId, { currentIndex: currentChallengeIndex - 1 });
-      setChallengeResult(null);
-      setSelectedOptionId(null);
-    }
-  };
-
-  const startNextMission = () => {
-    const currentIndex = allStages.findIndex(s => s.id === stageId);
-    if (currentIndex < allStages.length - 1) {
-      const nextStage = allStages[currentIndex + 1];
-      setShowStageComplete(false);
-      // The map will auto-switch because JourneyMap listens to currentStage
-    }
-  };
+  }, [currentChallengeIndex, masteredSteps, challengeResult, activeChallenges.length, stageId, addXP, updateStageProgress, completeStage]);
 
   return (
     <div className="stage-card">
-      <div className="stage-tabs">
-        <button className={`stage-tab ${activeTab === 'story' ? 'active' : ''}`} onClick={() => setActiveTab('story')}><BookOpen size={16} /> Visual Story</button>
-        <button className={`stage-tab ${activeTab === 'mistakes' ? 'active' : ''}`} onClick={() => setActiveTab('mistakes')}><AlertCircle size={16} /> Mistakes</button>
-        <button className={`stage-tab ${activeTab === 'challenge' ? 'active' : ''}`} onClick={() => setActiveTab('challenge')}><Target size={16} /> Challenge</button>
-        <button className={`stage-tab ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}><Globe size={16} /> Real World</button>
-      </div>
+      <StageTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="stage-content-body">
-        {activeTab === 'story' && (
-          <div className="tab-story">
-            <h3 className="tab-heading-story">The Story of {stageTitle}</h3>
-            <FlowDiagram nodes={(details.story || []).map((node, i) => ({
-              ...node,
-              fact: (details.facts || [])[i]
-            }))} />
-          </div>
-        )}
-
-        {activeTab === 'mistakes' && (
-          <div className="tab-mistakes">
-            <h3 className="tab-heading">Common Roadblocks</h3>
-            <div className="mistake-grid">
-              {(details.mistakes || []).map((m, i) => (
-                <div key={i} className="mistake-card">
-                  <div className="mistake-title"><AlertTriangle size={14} className="icon-orange" /> {m?.title || 'Unknown Issue'}</div>
-                  <div className="mistake-consequence">↳ {m?.consequence || 'Potential risk'}</div>
-                  <div className="mistake-fix"><CheckCircle size={14} className="icon-green" /> Fix: {m?.fix || 'Consult the ECI guide.'}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+        {activeTab === 'story' && <StoryTab stageTitle={stageTitle} story={details.story} facts={details.facts} />}
+        {activeTab === 'mistakes' && <MistakesTab mistakes={details.mistakes} />}
         {activeTab === 'challenge' && (
-          <div className="tab-challenge">
-            <div className="challenge-progress-header">
-              <h3 className="tab-heading">Mastery Series</h3>
-              <div className="mastery-steps">Step {currentChallengeIndex + 1} of {Math.max(activeChallenges.length, 1)}</div>
-            </div>
-            
-            <div className="mastery-progress-bar">
-              <div 
-                className="mastery-progress-fill" 
-                style={{ width: `${((currentChallengeIndex + (challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex) ? 1 : 0)) / Math.max(activeChallenges.length, 1)) * 100}%` }}
-              />
-            </div>
-
-            <p className="challenge-q">
-              {activeChallenges[currentChallengeIndex]?.question || "No challenge available for this stage."}
-            </p>
-
-            <div className="choice-grid">
-              {(activeChallenges[currentChallengeIndex]?.options || []).map((opt) => {
-                if (!opt) return null;
-                const isMastered = masteredSteps.includes(currentChallengeIndex);
-                const isCorrectChoice = opt.correct;
-                
-                return (
-                  <button 
-                     key={opt.id}
-                     data-opt-id={opt.id}
-                     className={`choice-btn 
-                       ${(challengeResult === 'correct' || isMastered) && isCorrectChoice ? 'correct' : ''} 
-                       ${challengeResult === 'wrong' && opt.id === selectedOptionId ? 'shake wrong' : ''}
-                     `}
-                     onClick={(e) => handleChallenge(opt.correct, e)}
-                     disabled={challengeResult === 'correct' || isMastered}
-                  >
-                    <div className="choice-info">
-                      <span style={{ fontWeight: 'bold', marginRight: '8px', color: 'var(--blue)' }}>{opt.id}.</span> 
-                      {opt.text}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {(challengeResult || masteredSteps.includes(currentChallengeIndex)) && (
-              <div className={`challenge-feedback-premium ${masteredSteps.includes(currentChallengeIndex) ? 'correct' : challengeResult}`}>
-                <div className="feedback-content">
-                  {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? <CheckCircle size={24} className="feedback-icon" /> : <AlertTriangle size={24} className="feedback-icon" />}
-                  <div className="feedback-text-container">
-                    <span className="feedback-label">
-                      {(challengeResult === 'correct' || masteredSteps.includes(currentChallengeIndex)) ? "Excellent!" : "Not quite!"}
-                    </span>
-                    <span className="feedback-desc">
-                      {masteredSteps.includes(currentChallengeIndex) || challengeResult === 'correct'
-                        ? activeChallenges[currentChallengeIndex]?.options?.find(opt => opt?.correct)?.feedback
-                        : "Review the question carefully and try again."}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="mastery-nav-controls">
-              <button 
-                className="btn-nav" 
-                onClick={prevStep}
-                disabled={currentChallengeIndex === 0}
-              >
-                ← Previous
-              </button>
-              <button 
-                className="btn-nav btn-primary" 
-                onClick={nextStep}
-                disabled={currentChallengeIndex >= activeChallenges.length - 1}
-              >
-                Next Step →
-              </button>
-            </div>
-
-            {/* XP Surge Nodes */}
-            {xpFloats.map(f => (
-              <div 
-                key={f.id} 
-                className="xp-float-node"
-                style={{ left: f.x, top: f.y }}
-              >
-                +{f.amount} XP
-              </div>
-            ))}
-
-            {/* Stage Mastery Overlay */}
-            {showStageComplete && (
-              <div className="stage-mastery-overlay">
-                <div className="mastery-mini-card">
-                  <div className="mastery-icon">🏆</div>
-                  <h3>Mission Mastered!</h3>
-                  <p>You have successfully completed the {details.title} challenges. Your civic wisdom grows!</p>
-                  <div className="mastery-actions">
-                    <button className="btn-action" onClick={() => setShowStageComplete(false)}>Stay Here</button>
-                    <button className="btn-action btn-primary" onClick={startNextMission}>Next Mission →</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <ChallengeTab 
+            stageId={stageId}
+            activeChallenges={activeChallenges}
+            currentChallengeIndex={currentChallengeIndex}
+            challengeResult={challengeResult}
+            masteredSteps={masteredSteps}
+            selectedOptionId={selectedOptionId}
+            onChallenge={handleChallenge}
+            onNext={() => updateStageProgress(stageId, { currentIndex: currentChallengeIndex + 1 })}
+            onPrev={() => updateStageProgress(stageId, { currentIndex: currentChallengeIndex - 1 })}
+            xpFloats={xpFloats}
+            showStageComplete={showStageComplete}
+            onStay={() => setShowStageComplete(false)}
+            onNextMission={() => setShowStageComplete(false)}
+            details={details}
+          />
         )}
-
-        {activeTab === 'data' && (() => {
-          const rw = REAL_WORLD_DATA[stageId] || REAL_WORLD_DATA.announcement;
-          return (
-            <div className="tab-data">
-              <h3 className="tab-heading">
-                Real World · {stageTitle}
-              </h3>
-              <p className="tab-subtext">
-                Actual data, landmark rulings, and verified facts from Indian elections.
-              </p>
-
-              {/* Stats grid */}
-              <div className="data-stats-grid">
-                {rw.stats.map((stat, i) => (
-                  <div key={i} className="data-stat-card">
-                    <div className="data-stat-icon">{stat.icon}</div>
-                    <div className="data-stat-value">{stat.value}</div>
-                    <div className="data-stat-label">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Case studies */}
-              <div className="data-cases-header">
-                <Newspaper size={16} className="icon-gold" />
-                <h4>Landmark Cases & Notable Events</h4>
-              </div>
-
-              <div className="data-cases-list">
-                {rw.cases.map((c, i) => (
-                  <div key={i} className="data-case-item">
-                    <div className="data-case-content">
-                      <span className="data-case-icon">{c.icon}</span>
-                      <div className="data-case-text">
-                        <div className="data-case-header-row">
-                          <span className="data-case-title">{c.title}</span>
-                          <span className="data-case-date">{c.date}</span>
-                        </div>
-                        <p className="data-case-body">{c.body}</p>
-                        <div className="data-case-verdict">
-                          <CheckCircle size={13} className="icon-success" />
-                          <span>{c.verdict}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* External link */}
-              <a
-                href={rw.link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="data-external-link"
-              >
-                <ExternalLink size={15} />
-                {rw.link.label}
-              </a>
-            </div>
-          );
-        })()}
+        {activeTab === 'data' && <DataTab stageId={stageId} stageTitle={stageTitle} />}
       </div>
     </div>
   );
 }
 
 export default React.memo(StageCard);
-
-

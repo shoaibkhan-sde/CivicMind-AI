@@ -46,7 +46,10 @@ def create_app(config_name="development"):
         content_security_policy=csp if not is_dev else False,
         force_https=not is_dev,
         frame_options="DENY",
-        referrer_policy="no-referrer"
+        referrer_policy="no-referrer",
+        x_content_type_options=True,
+        strict_transport_security=True,
+        strict_transport_security_max_age=31536000 # 1 year
     )
 
     @app.before_request
