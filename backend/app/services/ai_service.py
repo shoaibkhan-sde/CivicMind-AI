@@ -1,9 +1,10 @@
 import os
 import logging
 
-# Force stable v1 API version globally to avoid v1beta 404s
+# Force stable v1 API version and Gemini API (not Vertex AI)
 # This MUST happen BEFORE google.generativeai is imported
 os.environ["GOOGLE_GENERATIVE_AI_API_VERSION"] = "v1"
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"
 
 import google.generativeai as genai
 from flask import current_app
@@ -35,7 +36,14 @@ class AIService:
         model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
 
         if api_key:
-            genai.configure(api_key=api_key)
+            from google.api_core import client_options as client_options_lib
+            genai.configure(
+                api_key=api_key,
+                client_options=client_options_lib.ClientOptions(
+                    api_endpoint="generativelanguage.googleapis.com"
+                ),
+                transport="rest"
+            )
             cls._model = genai.GenerativeModel(
                 model_name=model_name,
                 system_instruction=(
@@ -73,7 +81,7 @@ class AIService:
         
         primary_model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
         # List of models to try in order. If one fails (like 404), we try the next.
-        model_aliases = [primary_model_name, "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-pro"]
+        model_aliases = ["gemini-1.5-flash"]
         
         last_error = None
         use_vertex_for_attempt = cls._use_vertex
