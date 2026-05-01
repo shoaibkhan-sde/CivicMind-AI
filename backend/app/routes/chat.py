@@ -20,30 +20,24 @@ def chat():
             data = ChatRequest(**request.get_json())
         except ValidationError as e:
             return jsonify({"error": e.errors(), "code": "VALIDATION_ERROR"}), 400
-            
-        try:
-            message = sanitize_text(data.message)
-        except ValueError as e:
-            return jsonify({"error": str(e), "code": "INVALID_INPUT"}), 400
-            
-        # Build Context Prompt
-        app_context = data.appContext
-        history = data.history
 
-        stage = str(app_context.get("currentStage", "general"))[:50]
-        level = int(app_context.get("userLevel", 1))
+        message = sanitize_text(data.message)
+        history = data.history
+        app_context = data.appContext
         
-        system_context = f"[Context - Level: {level}, Stage: {stage}]"
-        
-        # Check if history is too long and needs summarization
-        # (This is a simplified version of the sliding window)
-        if len(history) > 15:
-            summary = AIService.summarize_history(history[:-10])
-            history = [{"role": "assistant", "content": f"Summary of previous chat: {summary}"}] + history[-10:]
+        # Build system context based on app state
+        system_context = ""
+        if app_context:
+            stage = app_context.get("currentStage")
+            if isinstance(stage, dict):
+                system_context = f"User is currently at stage: {stage.get('title', 'Unknown')}. Focus on {stage.get('description', 'learning')}."
+            elif isinstance(stage, str):
+                system_context = f"User is currently at stage: {stage}."
 
         reply, error = AIService.generate_reply(message, history=history, system_context=system_context)
         
         if error:
+            logger.error(f"AI Chat failed. Detail: {error}")
             return jsonify({"error": "AI failed", "details": error}), 503
             
         return jsonify({"reply": reply}), 200
