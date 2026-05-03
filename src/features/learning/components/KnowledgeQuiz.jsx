@@ -2,8 +2,7 @@ import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react'
 import PropTypes from 'prop-types';
 import useQuiz from '@/features/learning/hooks/useQuiz.js';
 import useFirebase from '@/shared/hooks/useFirebase.js';
-import useXP from '@/features/gamification/hooks/useXP.js';
-import { useHearts } from '@/features/gamification';
+import { useXP, useHearts } from '@/features/gamification';
 import { GA_EVENTS } from '@/shared/utils/constants.js';
 import { announceToScreenReader } from '@/shared/utils/accessibility.js';
 import logger from '@/shared/utils/logger.js';

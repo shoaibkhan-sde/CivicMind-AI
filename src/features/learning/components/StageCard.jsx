@@ -54,6 +54,11 @@ function StageCard({ stageId }) {
 
   useEffect(() => {
     setChallengeResult(null);
+    setSelectedOptionId(null);
+  }, [currentChallengeIndex]);
+
+  useEffect(() => {
+    setChallengeResult(null);
     setXpFloats([]);
     setActiveTab('story');
     setSelectedOptionId(null);

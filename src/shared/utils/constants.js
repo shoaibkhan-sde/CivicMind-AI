@@ -4,6 +4,7 @@
 
 export * from './journey_config.js';
 export * from './quiz_bank.js';
+export * from './sim_scenarios.js';
 
 export const TABS = {
   JOURNEY: 'journey',

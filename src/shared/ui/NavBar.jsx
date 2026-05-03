@@ -68,7 +68,6 @@ function NavBar({ activeTab, onTabChange, user = null, isGuest, onAvatarClick })
       {/* Logo mark */}
       <div className="sidebar-logo" aria-hidden="true" title="CivicMind AI">
         <Compass size={32} className="logo-icon-premium" />
-        <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 'bold' }}>v1.0.1-HOTFIX</span>
       </div>
 
       {/* Primary nav items */}

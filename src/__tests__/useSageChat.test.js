@@ -19,20 +19,23 @@ jest.mock('@/shared/utils/logger', () => ({
   error: jest.fn()
 }));
 
-// Global fetch mock
-global.fetch = jest.fn();
+// Mock fetch is handled in setup.js
 
 // Mock sessionStorage
 const mockSessionStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
+  clear: jest.fn(),
+  removeItem: jest.fn(),
 };
 Object.defineProperty(window, 'sessionStorage', { value: mockSessionStorage });
 
 describe('useSageChat Hook', () => {
   beforeEach(() => {
+    global.fetch.mockReset();
     jest.clearAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   test('should start with empty messages', () => {

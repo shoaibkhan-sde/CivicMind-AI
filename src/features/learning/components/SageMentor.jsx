@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import useSageChat from '@/features/learning/hooks/useSageChat';
-import useXP from '@/features/gamification/hooks/useXP';
+import { useXP } from '@/features/gamification';
 import { Bot, Trash2, SendHorizontal, Sparkles, ChevronDown } from 'lucide-react';
 import ConfirmModal from '@/shared/ui/ConfirmModal';
 import { Button } from '@/shared/ui/Button';

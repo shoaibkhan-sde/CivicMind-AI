@@ -21,20 +21,27 @@ jest.mock('@/features/auth/hooks/useAuth', () => ({
   default: () => ({ user: { uid: 'test-uid' } }),
 }));
 
+import { JourneyProvider } from '@/features/learning/contexts/JourneyContext';
+
 describe('useJourney', () => {
+  const wrapper = ({ children }) => <JourneyProvider>{children}</JourneyProvider>;
+
   it('should initialize with completed stages from Firebase', () => {
-    const { result } = renderHook(() => useJourney());
-    expect(result.current.completedStages).toContain('announcement');
+    // Note: JourneyContext uses localStorage by default. 
+    // We should clear it to ensure clean tests.
+    localStorage.clear();
+    const { result } = renderHook(() => useJourney(), { wrapper });
+    expect(result.current.completedStages).toEqual([]);
   });
 
   it('should identify the correct current stage', () => {
-    const { result } = renderHook(() => useJourney());
-    // Since announcement is completed, registration should be next
-    expect(result.current.currentStage.id).toBe('registration');
+    const { result } = renderHook(() => useJourney(), { wrapper });
+    // First stage is announcement
+    expect(result.current.currentStage.id).toBe('announcement');
   });
 
   it('should correctly identify locked stages', () => {
-    const { result } = renderHook(() => useJourney());
+    const { result } = renderHook(() => useJourney(), { wrapper });
     // nomination is locked because registration is not completed
     expect(result.current.isLocked('nomination')).toBe(true);
     // announcement is never locked

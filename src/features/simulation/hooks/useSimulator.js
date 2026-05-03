@@ -68,6 +68,7 @@ export default function useSimulator() {
     isGameOver,
     phase,
     makeDecision,
-    resetSimulation
+    resetSim: resetSimulation,
+    isLoaded: true
   };
 }

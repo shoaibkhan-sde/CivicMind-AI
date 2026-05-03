@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import useAuth from '@/features/auth/hooks/useAuth';
-import useXP from '@/features/gamification/hooks/useXP';
+import { useXP } from '@/features/gamification';
 import useJourney from '@/features/learning/hooks/useJourney';
 import logger from '@/shared/utils/logger';
 
@@ -31,7 +31,10 @@ export default function useSageChat(context = 'mentor') {
   }, [messages, context]);
 
   const sendMessage = useCallback(async (content) => {
-    if (!content.trim()) return;
+    if (!content.trim()) {
+      setError('Message cannot be empty');
+      return;
+    }
 
     const userMsg = { role: 'user', content, timestamp: new Date().toISOString() };
     setMessages(prev => [...prev, userMsg]);
@@ -84,6 +87,10 @@ export default function useSageChat(context = 'mentor') {
     }
   }, [user, xpState.level, currentStage.id, context]);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const clearChat = useCallback(() => {
     setMessages([]);
     sessionStorage.removeItem(`civic_chat_${context}`);
@@ -94,6 +101,7 @@ export default function useSageChat(context = 'mentor') {
     sendMessage,
     isLoading,
     error,
+    clearError,
     clearChat
   };
 }

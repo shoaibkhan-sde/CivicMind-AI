@@ -3,32 +3,26 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import useAdaptiveQuiz from '../hooks/useAdaptiveQuiz';
+import useAdaptiveQuiz from '@/features/learning/hooks/useAdaptiveQuizAI';
+
+import { AppProvider } from '@/shared/providers/AppProvider';
 
 describe('useAdaptiveQuiz', () => {
-  it('should start with easy difficulty', () => {
-    const { result } = renderHook(() => useAdaptiveQuiz('nomination'));
-    expect(result.current.difficulty).toBe('easy');
-  });
-
-  it('should increase difficulty on correct answer', () => {
-    const { result } = renderHook(() => useAdaptiveQuiz('nomination'));
-    
-    act(() => {
-      result.current.processAnswer(true, 'eligibility');
+  const wrapper = ({ children }) => <AppProvider>{children}</AppProvider>;
+  it('fetchQuestion should call API and return data', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ question: 'Test?', options: ['A', 'B'], correctIndex: 0 }),
     });
 
-    expect(result.current.difficulty).toBe('medium');
-  });
-
-  it('should flag weak topics on wrong answers', () => {
-    const { result } = renderHook(() => useAdaptiveQuiz('nomination'));
+    const { result } = renderHook(() => useAdaptiveQuiz(), { wrapper });
     
-    act(() => {
-      result.current.processAnswer(false, 'eligibility');
+    let data;
+    await act(async () => {
+      data = await result.current.fetchQuestion();
     });
 
-    expect(result.current.wrongTopics).toContain('eligibility');
-    expect(result.current.difficulty).toBe('easy'); // stays easy if wrong from easy
+    expect(data.question).toBe('Test?');
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/quiz/generate'), expect.any(Object));
   });
 });

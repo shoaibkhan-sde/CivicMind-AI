@@ -7,8 +7,6 @@ An interactive Election Process Education assistant powered by Google Gemini AI,
 ![Lint](https://img.shields.io/badge/lint-clean-blue)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev)
 [![Flask](https://img.shields.io/badge/Flask-3.0-000000?logo=flask)](https://flask.palletsprojects.com)
-[![Gemini](https://img.shields.io/badge/Gemini-1.5_Flash-4285F4?logo=google)](https://ai.google.dev)
-[![Cloud Run](https://img.shields.io/badge/Cloud_Run-Deployed-4285F4?logo=google-cloud)](https://cloud.google.com/run)
 
 ## 🎯 Problem Statement Alignment
 
@@ -35,16 +33,6 @@ The application follows a **Feature-Based + Layered Hybrid Architecture** design
 - 🎮 **Gamification Loop** — Hearts system, XP leagues, and daily streaks.
 - 🪜 **Step-by-Step Voting Wizard** — Animated 5-step interactive voting guide.
 - 🧠 **Adaptive Quiz Engine** — Mission-based challenges that react to learning progress.
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18 + Vite + Context API |
-| **Backend** | Flask 3 + Gunicorn + Flask-Limiter |
-| **AI Engine** | Google Gemini 1.5 Flash (API v1 Stable) |
-| **Persistence** | Firebase Realtime Database + LocalStorage |
-| **Deployment** | Google Cloud Run (Containerized Docker) |
 
 ## ⚙️ Development Setup
 

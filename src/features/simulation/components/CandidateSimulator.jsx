@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useSimulator from '@/features/simulation/hooks/useSimulator';
-import useXP from '@/features/gamification/hooks/useXP';
+import { useXP } from '@/features/gamification';
 import { SIM_SCENARIOS } from '@/shared/utils/constants.js';
 import { Button } from '@/shared/ui/Button';
 
@@ -23,7 +23,7 @@ export default function CandidateSimulator() {
   }
 
   // 🛡️ SANITIZER: Prevent crash if phase data is missing
-  const scenarios = SIM_SCENARIOS[phase] || SIM_SCENARIOS.early || [];
+  const scenarios = SIM_SCENARIOS[phase] || SIM_SCENARIOS.active || [];
   const currentScene = scenarios.length > 0
     ? scenarios[history.length % scenarios.length]
     : { scene: 'Campaign Trail', description: 'Meeting with the people.', prompt: 'What will you say?', choices: [] };

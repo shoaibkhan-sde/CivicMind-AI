@@ -17,6 +17,7 @@ export const ProgressionProvider = ({ children }) => {
       xp: 0,
       level: 1,
       title: 'New Voter',
+      progressToNext: 0,
       streak: 0,
       dailyXP: 0,
       isTodayActive: false,
@@ -32,20 +33,30 @@ export const ProgressionProvider = ({ children }) => {
 
   const addXP = useCallback((amount) => {
     setXpState(prev => {
-      const newXP = prev.xp + amount;
-      const newDailyXP = prev.dailyXP + amount;
+      const newXP = Math.max(0, prev.xp + amount);
+      const newDailyXP = Math.max(0, prev.dailyXP + amount);
       
-      // Calculate level
+      // Calculate level and progress
       let newLevel = 1;
       let newTitle = 'New Voter';
-      for (const lvl of XP_LEVELS) {
+      let currentMin = 0;
+      let nextMin = 100;
+
+      for (let i = 0; i < XP_LEVELS.length; i++) {
+        const lvl = XP_LEVELS[i];
         if (newXP >= lvl.min) {
           newLevel = lvl.level;
           newTitle = lvl.title;
+          currentMin = lvl.min;
+          nextMin = XP_LEVELS[i + 1]?.min || (lvl.min + 1000);
         } else {
           break;
         }
       }
+
+      const progress = nextMin > currentMin 
+        ? Math.min(100, Math.max(0, ((newXP - currentMin) / (nextMin - currentMin)) * 100))
+        : 100;
 
       return {
         ...prev,
@@ -53,6 +64,7 @@ export const ProgressionProvider = ({ children }) => {
         dailyXP: newDailyXP,
         level: newLevel,
         title: newTitle,
+        progressToNext: progress,
         isTodayActive: true
       };
     });
@@ -71,6 +83,7 @@ export const ProgressionProvider = ({ children }) => {
       xp: 0,
       level: 1,
       title: 'New Voter',
+      progressToNext: 0,
       streak: 0,
       dailyXP: 0,
       isTodayActive: false,

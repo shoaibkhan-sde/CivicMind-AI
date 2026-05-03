@@ -3,6 +3,9 @@
  * Runs after the test framework is installed in the environment.
  * Patches jsdom APIs that are not natively implemented.
  */
+ 
+ // Global fetch mock
+ global.fetch = jest.fn();
 
 // jsdom does not implement scrollIntoView — mock it globally
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
@@ -24,29 +27,19 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 };
 
-// Mock gamification hooks globally
-jest.mock('@/features/gamification/hooks/useXP.js', () => ({
-  __esModule: true,
-  default: () => ({
-    xpState: { level: 1, xp: 0, title: 'New Voter', streak: 0, dailyXP: 0 },
-    addXP: jest.fn(),
-    notifications: [],
-    removeNotification: jest.fn(),
-  }),
-}));
 
 jest.mock('@/features/gamification', () => ({
   __esModule: true,
-  useHearts: () => ({
+  useHearts: jest.fn(() => ({
     hearts: 5,
     loseHeart: jest.fn(),
-  }),
-  useXP: () => ({
+  })),
+  useXP: jest.fn(() => ({
     xpState: { level: 1, xp: 0, title: 'New Voter', streak: 0, dailyXP: 0 },
     addXP: jest.fn(),
     notifications: [],
     removeNotification: jest.fn(),
-  }),
+  })),
   HeartsBar: () => null,
   LeagueBadge: () => null,
   XPNotification: () => null,

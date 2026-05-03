@@ -31,7 +31,7 @@ export const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`civic-button ${variant} ${className}`}
+      className={`btn btn-${variant} ${className}`}
       aria-label={label || (typeof children === 'string' ? children : undefined)}
       role="button"
       {...rest}

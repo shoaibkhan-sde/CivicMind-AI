@@ -2065,6 +2065,10 @@ body {
   cursor: pointer;
   position: relative;
   z-index: 2;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 8px !important;
 }
 
 .tab-heading-story {

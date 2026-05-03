@@ -24,7 +24,7 @@ describe('useQuiz', () => {
     expect(result.current.state.selectedIndex).toBeNull();
     expect(result.current.state.phase).toBe('playing');
     expect(result.current.currentQuestion).toBe(QUIZ_QUESTIONS[0]);
-    expect(result.current.totalQuestions).toBe(10);
+    expect(result.current.totalQuestions).toBe(41);
   });
 
   it('selectAnswer with correct index increments score and transitions to "answered"', () => {

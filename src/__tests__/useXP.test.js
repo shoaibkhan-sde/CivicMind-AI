@@ -3,7 +3,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import useXP from '@/features/gamification/hooks/useXP';
+import { useXP } from '@/features/gamification';
 
 // Mock Firebase
 jest.mock('firebase/database', () => ({
@@ -21,10 +21,15 @@ jest.mock('@/features/auth/hooks/useAuth', () => ({
   default: () => ({ user: { uid: 'test-uid' } }),
 }));
 
+import { ProgressionProvider } from '@/features/gamification/contexts/ProgressionContext';
+
 describe('useXP', () => {
-  it('should initialize with values from Firebase', () => {
-    const { result } = renderHook(() => useXP());
-    expect(result.current.xpState.xp).toBe(50);
+  const wrapper = ({ children }) => <ProgressionProvider>{children}</ProgressionProvider>;
+
+  it('should initialize with default values', () => {
+    localStorage.clear();
+    const { result } = renderHook(() => useXP(), { wrapper });
+    expect(result.current.xpState.xp).toBe(0);
     expect(result.current.xpState.level).toBe(1);
   });
 
@@ -32,7 +37,7 @@ describe('useXP', () => {
     // Manually setting state to simulate 100 XP
     // Note: in renderHook this usually requires a re-mock or a complex setup
     // For this demo test, we just check the logic if we were to receive 100
-    const { result } = renderHook(() => useXP());
+    const { result } = renderHook(() => useXP(), { wrapper });
     // (Actual calculation logic is tested here implicitly)
     expect(result.current.xpState.level).toBe(1); // 50 < 100
   });

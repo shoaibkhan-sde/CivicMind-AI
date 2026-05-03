@@ -50,7 +50,7 @@ export default function ChallengeTab({
           
           return (
             <Button 
-               key={opt.id}
+               key={`${currentChallengeIndex}-${opt.id}`}
                data-opt-id={opt.id}
                className={`choice-btn 
                  ${(challengeResult === 'correct' || isMastered) && isCorrectChoice ? 'correct' : ''} 
