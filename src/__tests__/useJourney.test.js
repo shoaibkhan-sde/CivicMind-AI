@@ -3,8 +3,8 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import useJourney from '../hooks/useJourney';
-import { JOURNEY_STAGES } from '../utils/constants';
+import useJourney from '@/features/learning/hooks/useJourney';
+import { JOURNEY_STAGES } from '@/shared/utils/constants';
 
 // Mock Firebase
 jest.mock('firebase/database', () => ({
@@ -16,7 +16,7 @@ jest.mock('firebase/database', () => ({
   update: jest.fn(),
 }));
 
-jest.mock('../hooks/useAuth', () => ({
+jest.mock('@/features/auth/hooks/useAuth', () => ({
   __esModule: true,
   default: () => ({ user: { uid: 'test-uid' } }),
 }));

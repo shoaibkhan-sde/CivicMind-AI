@@ -6,8 +6,9 @@ const config = {
     '<rootDir>/src/__tests__/setup.js',
   ],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
     // Map firebase and logger to Jest-safe mocks (avoids import.meta.env parse errors)
+    '^@/firebase(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/firebaseMock.js',
+    '^@/(.*)$': '<rootDir>/src/$1',
     '<rootDir>/src/firebase(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/firebaseMock.js',
     '.*/src/firebase(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/firebaseMock.js',
     '.*/src/utils/logger(\\.js)?$': '<rootDir>/src/__tests__/__mocks__/logger.js',

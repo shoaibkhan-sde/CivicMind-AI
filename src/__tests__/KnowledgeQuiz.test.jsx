@@ -7,11 +7,25 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import KnowledgeQuiz from '../components/KnowledgeQuiz.jsx';
-import { QUIZ_QUESTIONS } from '../utils/constants.js';
+import KnowledgeQuiz from '@/features/learning/components/KnowledgeQuiz.jsx';
+import { QUIZ_QUESTIONS } from '@/shared/utils/constants.js';
 
-// Mock useFirebase hook
-jest.mock('../hooks/useFirebase.js', () => {
+// Mock hooks
+jest.mock('@/features/gamification/hooks/useXP.js', () => {
+  return jest.fn(() => ({
+    xpState: { level: 1, xp: 0, title: 'New Voter' },
+    addXP: jest.fn(),
+  }));
+});
+
+jest.mock('@/features/gamification', () => ({
+  useHearts: jest.fn(() => ({
+    hearts: 5,
+    loseHeart: jest.fn(),
+  })),
+}));
+
+jest.mock('@/shared/hooks/useFirebase.js', () => {
   return jest.fn(() => ({
     saveScore: jest.fn(),
     leaderboard: [],
@@ -23,6 +37,11 @@ jest.mock('../hooks/useFirebase.js', () => {
 // Mock gtag
 beforeEach(() => {
   window.gtag = jest.fn();
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('KnowledgeQuiz', () => {
@@ -75,7 +94,7 @@ describe('KnowledgeQuiz', () => {
     const options = screen.getAllByRole('radio');
     fireEvent.click(options[0]);
     // Button aria-label is "Go to next question" or "See your results"
-    const nextBtn = screen.getByRole('button', { name: /go to next question|see your results/i });
+    const nextBtn = screen.getByRole('button', { name: /continue|finish/i });
     expect(nextBtn).toBeInTheDocument();
   });
 
@@ -89,7 +108,7 @@ describe('KnowledgeQuiz', () => {
       // The last question's next btn says "See your results"
       const isLast = i === QUIZ_QUESTIONS.length - 1;
       const nextBtn = screen.getByRole('button', {
-        name: isLast ? /see your results/i : /go to next question/i,
+        name: isLast ? /finish/i : /continue/i,
       });
       fireEvent.click(nextBtn);
     }

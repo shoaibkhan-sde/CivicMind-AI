@@ -4,25 +4,19 @@
  */
 
 import React, { lazy, Suspense, useState, useCallback, useEffect } from 'react';
-import NavBar from './components/NavBar.jsx';
-import AuthModal from './components/AuthModal.jsx';
-import ErrorBoundary from './components/ErrorBoundary.jsx';
-import XPNotification from './components/XPNotification.jsx';
-import XPToast from './components/XPToast.jsx';
-import HeartsBar from './components/HeartsBar.jsx';
-import LeagueBadge from './components/LeagueBadge.jsx';
-import SAGEOwl from './components/SAGEOwl.jsx';
-import useAuth from './hooks/useAuth.js';
-import useXP from './hooks/useXP.js';
-import { TABS } from './utils/constants.js';
-import { DAILY_GOAL_XP } from './utils/leagues.js';
 import { CloudUpload } from 'lucide-react';
 
-const JourneyMap = lazy(() => import('./components/JourneyMap.jsx'));
-const CandidateSimulator = lazy(() => import('./components/CandidateSimulator.jsx'));
-const SageMentor = lazy(() => import('./components/SageMentor.jsx'));
-const QuizView = lazy(() => import('./components/QuizView.jsx'));
-const SettingsView = lazy(() => import('./components/SettingsView.jsx'));
+import { NavBar, SAGEOwl, ErrorBoundary, Button } from '@/shared/ui';
+import { AuthModal, useAuth } from '@/features/auth';
+import { XPNotification, XPToast, HeartsBar, LeagueBadge, useXP } from '@/features/gamification';
+import { TABS } from '@/shared/utils/constants';
+import { DAILY_GOAL_XP } from '@/shared/utils/leagues';
+
+const JourneyMap = lazy(() => import('@/features/learning').then(m => ({ default: m.JourneyMap })));
+const CandidateSimulator = lazy(() => import('@/features/simulation').then(m => ({ default: m.CandidateSimulator })));
+const SageMentor = lazy(() => import('@/features/learning').then(m => ({ default: m.SageMentor })));
+const QuizView = lazy(() => import('@/features/learning').then(m => ({ default: m.QuizView })));
+const SettingsView = lazy(() => import('@/features/settings').then(m => ({ default: m.SettingsView })));
 
 function TabFallback() {
   return (
@@ -65,12 +59,12 @@ function App() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case TABS.JOURNEY:   return <JourneyMap />;
-      case TABS.SIMULATE:  return <CandidateSimulator />;
-      case TABS.MENTOR:    return <SageMentor />;
-      case TABS.QUIZ:      return <QuizView />;
-      case TABS.SETTINGS:  return <SettingsView />;
-      default:             return <JourneyMap />;
+      case TABS.JOURNEY: return <JourneyMap />;
+      case TABS.SIMULATE: return <CandidateSimulator />;
+      case TABS.MENTOR: return <SageMentor />;
+      case TABS.QUIZ: return <QuizView />;
+      case TABS.SETTINGS: return <SettingsView />;
+      default: return <JourneyMap />;
     }
   };
 
@@ -131,9 +125,14 @@ function App() {
               <span className="xp-value">{xpState.xp.toLocaleString()}</span>
             </div>
             {isGuest && (
-              <button className="badge save" onClick={() => setAuthModalOpen(true)}>
+              <Button
+                variant="save"
+                onClick={() => setAuthModalOpen(true)}
+                className="badge"
+                label="Save"
+              >
                 <CloudUpload size={14} /> Save
-              </button>
+              </Button>
             )}
           </div>
         </header>

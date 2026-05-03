@@ -3,9 +3,9 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import useSimulator from '../hooks/useSimulator';
+import useSimulator from '@/features/simulation/hooks/useSimulator';
 
-jest.mock('../hooks/useAuth', () => ({
+jest.mock('@/features/auth/hooks/useAuth', () => ({
   __esModule: true,
   default: () => ({ user: { uid: 'test-uid' } }),
 }));

@@ -23,3 +23,32 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 };
+
+// Mock gamification hooks globally
+jest.mock('@/features/gamification/hooks/useXP.js', () => ({
+  __esModule: true,
+  default: () => ({
+    xpState: { level: 1, xp: 0, title: 'New Voter', streak: 0, dailyXP: 0 },
+    addXP: jest.fn(),
+    notifications: [],
+    removeNotification: jest.fn(),
+  }),
+}));
+
+jest.mock('@/features/gamification', () => ({
+  __esModule: true,
+  useHearts: () => ({
+    hearts: 5,
+    loseHeart: jest.fn(),
+  }),
+  useXP: () => ({
+    xpState: { level: 1, xp: 0, title: 'New Voter', streak: 0, dailyXP: 0 },
+    addXP: jest.fn(),
+    notifications: [],
+    removeNotification: jest.fn(),
+  }),
+  HeartsBar: () => null,
+  LeagueBadge: () => null,
+  XPNotification: () => null,
+  XPToast: () => null,
+}));

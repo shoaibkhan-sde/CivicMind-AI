@@ -7,12 +7,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
+import { AppProvider } from './shared/providers/AppProvider.jsx';
+import { validateEnv } from './shared/config/validateEnv.js';
 
-import { AuthProvider } from './contexts/AuthContext.jsx';
-import { SettingsProvider } from './contexts/SettingsContext.jsx';
-import { ProgressionProvider } from './contexts/ProgressionContext.jsx';
-import { JourneyProvider } from './contexts/JourneyContext.jsx';
-import { HeartsProvider } from './contexts/HeartsContext.jsx';
+// Fast-fail environment validation
+validateEnv();
 
 const rootElement = document.getElementById('root');
 
@@ -22,16 +21,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <React.StrictMode>
-    <AuthProvider>
-      <SettingsProvider>
-        <ProgressionProvider>
-          <HeartsProvider>
-            <JourneyProvider>
-              <App />
-            </JourneyProvider>
-          </HeartsProvider>
-        </ProgressionProvider>
-      </SettingsProvider>
-    </AuthProvider>
+    <AppProvider>
+      <App />
+    </AppProvider>
   </React.StrictMode>
 );

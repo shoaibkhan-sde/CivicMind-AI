@@ -1,20 +1,20 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import useSageChat from '../hooks/useSageChat';
+import useSageChat from '@/features/learning/hooks/useSageChat';
 
 // Mock dependencies
-jest.mock('../hooks/useAuth', () => () => ({
+jest.mock('@/features/auth/hooks/useAuth', () => () => ({
   user: { getIdToken: jest.fn().mockResolvedValue('mock-token') }
 }));
 
-jest.mock('../hooks/useXP', () => () => ({
+jest.mock('@/features/gamification/hooks/useXP', () => () => ({
   xpState: { level: 5, xp: 1200 }
 }));
 
-jest.mock('../hooks/useJourney', () => () => ({
+jest.mock('@/features/learning/hooks/useJourney', () => () => ({
   currentStage: { id: 'registration', title: 'Voter Registration' }
 }));
 
-jest.mock('../utils/logger', () => ({
+jest.mock('@/shared/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn()
 }));

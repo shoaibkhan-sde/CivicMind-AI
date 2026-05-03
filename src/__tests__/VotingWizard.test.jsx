@@ -5,8 +5,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import VotingWizard from '../components/VotingWizard.jsx';
-import { WIZARD_STEPS } from '../utils/constants.js';
+import VotingWizard from '@/features/simulation/components/VotingWizard.jsx';
+import { WIZARD_STEPS } from '@/shared/utils/constants.js';
 
 beforeEach(() => {
   window.gtag = jest.fn();

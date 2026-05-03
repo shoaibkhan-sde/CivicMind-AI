@@ -3,7 +3,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import useXP from '../hooks/useXP';
+import useXP from '@/features/gamification/hooks/useXP';
 
 // Mock Firebase
 jest.mock('firebase/database', () => ({
@@ -16,7 +16,7 @@ jest.mock('firebase/database', () => ({
   increment: jest.fn(val => val),
 }));
 
-jest.mock('../hooks/useAuth', () => ({
+jest.mock('@/features/auth/hooks/useAuth', () => ({
   __esModule: true,
   default: () => ({ user: { uid: 'test-uid' } }),
 }));
