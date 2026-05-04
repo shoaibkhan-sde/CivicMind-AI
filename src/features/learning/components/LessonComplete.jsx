@@ -7,17 +7,23 @@ import { Button } from '@/shared/ui/Button';
 
 // Generate random confetti particles
 function Confetti() {
+  const [particles, setParticles] = React.useState([]);
   const COLORS = ['#fbbf24', '#3b82f6', '#10b981', '#f43f5e', '#a78bfa', '#f97316'];
-  const particles = Array.from({ length: 60 }, (_, i) => ({
-    id: i,
-    color: COLORS[i % COLORS.length],
-    left: `${Math.random() * 100}%`,
-    delay: `${Math.random() * 0.8}s`,
-    duration: `${0.8 + Math.random() * 0.6}s`,
-    size: `${6 + Math.random() * 8}px`,
-    rotate: `${Math.random() * 720}deg`,
-    shape: Math.random() > 0.5 ? '50%' : '2px',
-  }));
+
+  React.useEffect(() => {
+    setParticles(Array.from({ length: 60 }, (_, i) => ({
+      id: i,
+      color: COLORS[i % COLORS.length],
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 0.8}s`,
+      duration: `${0.8 + Math.random() * 0.6}s`,
+      size: `${6 + Math.random() * 8}px`,
+      rotate: `${Math.random() * 720}deg`,
+      shape: Math.random() > 0.5 ? '50%' : '2px',
+    })));
+  }, []);
+
+  if (particles.length === 0) return null;
 
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">

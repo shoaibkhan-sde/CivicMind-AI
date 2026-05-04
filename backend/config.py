@@ -25,7 +25,14 @@ class ProductionConfig(Config):
     DEBUG = False
     RATELIMIT_STORAGE_URI = os.environ.get("REDIS_URL", "memory://")
 
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    RATELIMIT_STORAGE_URI = "memory://"
+    GEMINI_API_KEY = "test-key"
+
 config_by_name = {
     "development": DevelopmentConfig,
-    "production": ProductionConfig
+    "production": ProductionConfig,
+    "testing": TestingConfig
 }

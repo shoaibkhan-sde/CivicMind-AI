@@ -24,11 +24,11 @@ def test_404_frontend_fallback(client):
     """Test that non-API 404s fallback to index.html for React routing."""
     response = client.get('/random-page')
     assert response.status_code == 200
-    assert b"<!DOCTYPE html>" in response.data
+    assert b"doctype html" in response.data.lower()
 
-def test_chat_unauthorized_error(client):
+def test_chat_validation_error(client):
     """Test that chat endpoint handles missing data with standard error."""
-    response = client.post('/api/chat/message', json={})
+    response = client.post('/api/chat/', json={})
     # Should fail with 400 or 500 depending on implementation
     assert response.status_code in [400, 500]
     assert "error" in response.json

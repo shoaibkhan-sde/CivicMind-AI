@@ -88,7 +88,7 @@ def create_app(config_name="development"):
     @app.errorhandler(404)
     def handle_404(e):
         if request.path.startswith('/api/'):
-            return jsonify({"error": "Not Found", "success": False}), 404
+            return jsonify({"error": "Not Found", "success": False, "code": "NOT_FOUND"}), 404
         response = send_from_directory(app.static_folder, 'index.html')
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         return response
