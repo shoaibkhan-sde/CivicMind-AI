@@ -42,7 +42,7 @@ class AIService:
         api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         project = os.environ.get("GOOGLE_CLOUD_PROJECT")
         location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+        model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
         if api_key:
             from google.api_core import client_options as client_options_lib
@@ -89,9 +89,9 @@ class AIService:
         if not model:
             return None, "AI Service Unavailable"
         
-        primary_model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+        primary_model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
         # List of models to try in order. If one fails (like 404), we try the next.
-        model_aliases = ["gemini-1.5-flash"]
+        model_aliases = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
         
         last_error = None
         use_vertex_for_attempt = cls._use_vertex
