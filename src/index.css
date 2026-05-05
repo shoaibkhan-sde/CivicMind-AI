@@ -2966,13 +2966,24 @@ body {
 
 .sim-container {
   display: grid;
-  grid-template-columns: 320px 1fr 340px;
+  grid-template-columns: minmax(280px, 320px) minmax(300px, 1fr) minmax(280px, 340px);
   gap: 32px;
   max-width: 1500px;
   margin: 0 auto;
   padding: 24px 24px 40px;
   min-height: calc(100vh - 120px);
   align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .sim-container {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .sim-stats-panel, .scene-card, .sim-dashboard {
+    height: auto;
+    min-height: 400px;
+  }
 }
 
 @keyframes node-ring-pulse {
@@ -3190,6 +3201,7 @@ body {
   width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   position: relative;
+  white-space: normal;
 }
 
 .choice-btn:hover:not(:disabled) {
